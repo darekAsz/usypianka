@@ -116,13 +116,63 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by roadmap) | | |
+| PLAY-01 | Phase 1 | Pending |
+| PLAY-02 | Phase 1 | Pending |
+| PLAY-03 | Phase 3 | Pending |
+| PLAY-04 | Phase 2 | Pending |
+| PLAY-05 | Phase 1 | Pending |
+| PLAY-06 | Phase 1 | Pending |
+| PLAY-07 | Phase 3 | Pending |
+| TIME-01 | Phase 1 | Pending |
+| TIME-02 | Phase 1 | Pending |
+| TIME-03 | Phase 1 | Pending |
+| VOL-01 | Phase 2 | Pending |
+| VOL-02 | Phase 2 | Pending |
+| VOL-03 | Phase 2 | Pending |
+| VOL-04 | Phase 2 | Pending |
+| VOL-05 | Phase 2 | Pending |
+| FADE-01 | Phase 2 | Pending |
+| FADE-02 | Phase 2 | Pending |
+| FADE-03 | Phase 2 | Pending |
+| FADE-04 | Phase 2 | Pending |
+| FADE-05 | Phase 2 | Pending |
+| MIC-01 | Phase 4 | Pending |
+| MIC-02 | Phase 4 | Pending |
+| MIC-03 | Phase 4 | Pending |
+| MIC-04 | Phase 4 | Pending |
+| MIC-05 | Phase 4 | Pending |
+| MIC-06 | Phase 4 | Pending |
+| MIC-07 | Phase 4 | Pending |
+| LIB-01 | Phase 1 | Pending |
+| LIB-02 | Phase 5 | Pending |
+| LIB-03 | Phase 5 | Pending |
+| LIB-04 | Phase 5 | Pending |
+| LIB-05 | Phase 5 | Pending |
+| LIB-06 | Phase 5 | Pending |
+| LIB-07 | Phase 5 | Pending |
+| PRES-01 | Phase 5 | Pending |
+| PRES-02 | Phase 5 | Pending |
+| PRES-03 | Phase 5 | Pending |
+| PRES-04 | Phase 5 | Pending |
+| UI-01 | Phase 1 | Pending |
+| UI-02 | Phase 1 | Pending |
+| UI-03 | Phase 6 | Pending |
+| UI-04 | Phase 3 | Pending |
+| SAFE-01 | Phase 6 | Pending |
+| SAFE-02 | Phase 6 | Pending |
+| SAFE-03 | Phase 6 | Pending |
+| SAFE-04 | Phase 6 | Pending |
+| SAFE-05 | Phase 6 | Pending |
+| REL-01 | Phase 6 | Pending |
+| REL-02 | Phase 3 | Pending |
+| REL-03 | Phase 3 | Pending |
+| REL-04 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 51 total
-- Mapped to phases: 0
-- Unmapped: 51 ⚠️
+- Mapped to phases: 51
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-03*
-*Last updated: 2026-10-03 after initial definition*
+*Last updated: 2026-10-03 after roadmap creation*
