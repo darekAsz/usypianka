@@ -1,0 +1,12 @@
+build/
+.gradle/
+.kotlin/
+local.properties
+.idea/
+*.iml
+captures/
+tools/.venv/
+tools/out/
+__pycache__/
+*.jks
+*.keystore
