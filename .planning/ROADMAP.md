@@ -22,6 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Odtwarzanie z timerem
+
 **Goal**: Rodzic wybiera wbudowany szum, ustawia czas i włącza odtwarzanie — dźwięk łagodnie się pogłaśnia, gra w pętli bez słyszalnych przerw (także po zablokowaniu ekranu), a po upływie czasu płynnie wygasza się do ciszy i zatrzymuje.
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
@@ -31,11 +32,32 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Dźwięk zaczyna się kilkusekundowym płynnym pogłośnieniem i gra w pętli bez słyszalnych przerw ani kliknięć na łączeniu (sprawdzone na min. 2–3 fizycznych telefonach, w tym Xiaomi lub Samsung)
   3. Podczas odtwarzania aplikacja pokazuje odliczanie pozostałego czasu; po zablokowaniu ekranu dźwięk gra dalej, a po upływie czasu wycisza się przez kilka sekund do ciszy i odtwarzanie kończy się samo, bez nagłego urwania
   4. Cała aplikacja ma ciemny interfejs bez białego błysku przy starcie i wyświetla się po polsku lub angielsku zgodnie z językiem telefonu, z poprawną odmianą liczebników („1 minuta / 2 minuty / 5 minut”)
-**Plans**: TBD
+
+**Plans**: 7 plans (5 waves)
+
+Plans:
+**Wave 1**
+- [ ] 01-01-PLAN.md — Toolchain (SDK 37, Gradle 9.6.0) + installable dark app shell (wave 1)
+- [ ] 01-02-PLAN.md — Noise asset pipeline: legitimacy gate, generator + verifier, white/pink/brown FLAC + debug spike assets (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 01-03-PLAN.md — TRACER: Start plays a clock-timed looped noise via PlaybackService; timing model tests (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 01-04-PLAN.md — Gapless spike on the user's one phone (LoopProbe), loop-format decision, volume tuning, 01-SPIKE.md (wave 3)
+- [ ] 01-05-PLAN.md — PlayerUiState: chips, custom-time validation, locks, Stop cooldown (TDD) (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 01-06-PLAN.md — Player screen: tiles, chips, slider, countdown, +5 min, custom-time dialog with Polish plurals (wave 4)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 01-07-PLAN.md — Tile preview, dark v31 splash, per-app language, icons, R8 release smoke (wave 5)
+
 **UI hint**: yes
 **Research flag**: spike pętli bez przerw na prawdziwych urządzeniach (Media3 ExoPlayer REPEAT_MODE_ONE z FLAC/WAV vs AudioTrack jako wyjście awaryjne) przed utrwaleniem UI; wczesny test przy wygaszonym ekranie
 
 ### Phase 2: Poziom dB i tryby wyciszania
+
 **Goal**: Rodzic ustawia głośność w szacunkowych dB(A) i wybiera jeden z dwóch trybów płynnego wyciszania; przed startem widzi wykres przebiegu, a odtwarzanie dokładnie za nim podąża — także przy zablokowanym ekranie, ze sterowaniem z powiadomienia.
 **Mode:** mvp
 **Depends on**: Phase 1
@@ -46,10 +68,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Słyszane wyciszanie jest płynne (bez schodków i trzasków) i zgodne z wykresem; po wybudzeniu telefonu z uśpienia głośność odpowiada temu, co wynika z zegara, a nie jest opóźniona
   4. Przesunięcie suwaka w trakcie odtwarzania zmienia głośność od razu, a trwające wyciszanie biegnie dalej bez skoków i bez resetu
   5. Powiadomienie (także na ekranie blokady) pokazuje pozostały czas i aktualny poziom dB oraz pozwala wstrzymać, wznowić i zatrzymać odtwarzanie
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 3: Noc bez przerw i test w Google Play
+
 **Goal**: Odtwarzanie z timerem i wyciszaniem wytrzymuje całą noc na telefonach z agresywnym oszczędzaniem baterii i rozsądnie reaguje na przerwania, rodzic wie, jak zabezpieczyć aplikację przed ubijaniem, a wersja działająca w pełni offline trafia do testerów w zamkniętym teście Google Play.
 **Mode:** mvp
 **Depends on**: Phase 2
@@ -60,11 +84,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Ekran „Niezawodność” wyjaśnia, jak wyłączyć optymalizację baterii, i otwiera właściwe ustawienia na Xiaomi, Samsungu i innych popularnych markach (z instrukcją zastępczą, gdy skrót nie działa)
   4. Aplikacja działa w pełni offline: wersja release nie ma uprawnienia INTERNET, reklam, analityki ani zewnętrznych SDK (sprawdzone w scalonym manifeście), a polityka prywatności jest dostępna pod publicznym adresem URL
   5. Testerzy mogą zainstalować aplikację z zamkniętej ścieżki testów Google Play — test z min. 12 testerami przez 14 dni jest rozpoczęty
+
 **Plans**: TBD
 **UI hint**: yes
 **Research flag**: macierz OEM (HyperOS, One UI 7/8, ColorOS — zachowanie przy usunięciu z ostatnich aplikacji); sprawdzić dontkillmyapp przed rundą testów; macierz przerwań (połączenie, powiadomienie, inne media, DND)
 
 ### Phase 4: Miernik dB i kalibracja mikrofonem
+
 **Goal**: Rodzic widzi na żywo uczciwie opisany szacunkowy poziom dB(A) w pokoju — także przy zablokowanym ekranie — i krótką kalibracją sprawia, że dB na suwaku odpowiadają temu, co mierzy mikrofon.
 **Mode:** mvp
 **Depends on**: Phase 3
@@ -75,11 +101,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Rodzic przeprowadza krótką kalibrację, po której dB na suwaku zgadzają się z odczytem miernika (w granicach kilku dB — porównane z zewnętrznym miernikiem na min. 3 telefonach), i może ręcznie skorygować odczyt offsetem
   4. Po zmianie głośności systemowej lub wyjścia audio (np. podłączenie głośnika BT) aplikacja od razu oznacza kalibrację jako nieaktualną i proponuje ponowną
   5. Po odmowie uprawnienia do mikrofonu odtwarzanie, timer i wyciszanie działają normalnie — niedostępny jest tylko miernik
+
 **Plans**: TBD
 **UI hint**: yes
 **Research flag**: spike na urządzeniach — dostępność źródła UNPROCESSED, domyślny offset CDD (+130 dB), dokładność filtra A vs miernik referencyjny, próg szumów własnych (~30–35 dB(A)); zasady startu FGS mikrofonu na Androidzie 14+ (osobna usługa, start z widocznej Activity)
 
 ### Phase 5: Biblioteka, import i zestawy
+
 **Goal**: Rodzic wybiera z pełnej biblioteki (szumy, natura, kołysanki) albo z własnych plików, zapisuje ulubione zestawy ustawień i uruchamia je jednym dotknięciem.
 **Mode:** mvp
 **Depends on**: Phase 4
@@ -90,10 +118,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Rodzic zapisuje zestaw (dźwięk + czas + głośność + wyciszanie) pod własną nazwą, np. „Drzemka” lub „Noc”, uruchamia go jednym dotknięciem, edytuje i usuwa
   4. Po zamknięciu i ponownym otwarciu aplikacji ostatnio użyte ustawienia są przywrócone
   5. Ekran „Autorzy / licencje” wymienia źródło i licencję każdego wbudowanego dźwięku
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 6: Bezpieczne odtwarzanie i publikacja
+
 **Goal**: Rodzic ma w dolnej nawigacji zakładkę z rzetelnymi, opartymi na źródłach zaleceniami bezpiecznego odtwarzania, a aplikacja spełnia wymagania Google Play i jest opublikowana.
 **Mode:** mvp
 **Depends on**: Phase 5
@@ -103,6 +133,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Zakładka zawiera skalę porównawczą (szept, rozmowa itp.) ze źródłem oraz zastrzeżenie, że aplikacja nie jest wyrobem medycznym, a pomiar jest szacunkowy — po polsku i po angielsku
   3. Wersja release ma target API 36, a w Play Console są wypełnione: deklaracje usług w tle (mediaPlayback, microphone) z filmami demo, deklaracja Health apps, Data safety („brak zbieranych danych”) i grupa docelowa: dorośli / rodzice
   4. Zamknięty test (min. 12 testerów przez 14 dni) jest zakończony, dostęp produkcyjny przyznany, a aplikację można pobrać z Google Play
+
 **Plans**: TBD
 **UI hint**: yes
 **Research flag**: ponownie przeczytać formularze Play Console (deklaracja FGS, Health apps, status przedsiębiorcy DSA) w momencie zgłoszenia — często się zmieniają
@@ -123,7 +154,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Odtwarzanie z timerem | 0/TBD | Not started | - |
+| 1. Odtwarzanie z timerem | 0/7 | Planned | - |
 | 2. Poziom dB i tryby wyciszania | 0/TBD | Not started | - |
 | 3. Noc bez przerw i test w Google Play | 0/TBD | Not started | - |
 | 4. Miernik dB i kalibracja mikrofonem | 0/TBD | Not started | - |

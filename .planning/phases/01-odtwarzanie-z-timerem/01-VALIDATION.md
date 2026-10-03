@@ -42,17 +42,15 @@ Filled in by the planner/executor per task. Requirement → test mapping (from R
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| TBD | — | — | PLAY-01 | — | N/A | unit (virtual time) | `./gradlew.bat testDebugUnitTest --tests "*SessionEngineTest"` | ❌ W0 | ⬜ pending |
-| TBD | — | — | PLAY-02 | — | N/A | script + device spike | `python tools/verify_assets.py <dir>`; `LoopProbe` on device | ❌ W0 | ⬜ pending |
-| TBD | — | — | PLAY-05 | — | N/A | unit | `./gradlew.bat testDebugUnitTest --tests "*SessionTimelineTest"` | ❌ W0 | ⬜ pending |
-| TBD | — | — | PLAY-06 | — | N/A | unit | `./gradlew.bat testDebugUnitTest --tests "*SessionTimelineTest" --tests "*SessionEngineTest"` | ❌ W0 | ⬜ pending |
-| TBD | — | — | TIME-01 | — | N/A | unit | `./gradlew.bat testDebugUnitTest --tests "*PlayerUiStateTest"` | ❌ W0 | ⬜ pending |
-| TBD | — | — | TIME-02 | — | input range validated | unit | `./gradlew.bat testDebugUnitTest --tests "*SessionTimelineTest"` | ❌ W0 | ⬜ pending |
-| TBD | — | — | TIME-03 | — | N/A | unit + manual | `./gradlew.bat testDebugUnitTest --tests "*SessionTimelineTest"` | ❌ W0 | ⬜ pending |
-| TBD | — | — | LIB-01 | — | N/A | script + build | `python tools/verify_assets.py app/src/main/assets/sounds` | ❌ W0 | ⬜ pending |
-| TBD | — | — | UI-01 | — | N/A | static + manual | `./gradlew.bat lintDebug` | ❌ W0 | ⬜ pending |
-| TBD | — | — | UI-02 | — | N/A | lint + manual | `./gradlew.bat lintDebug` (MissingTranslation, MissingQuantity) | ❌ W0 | ⬜ pending |
-| TBD | — | — | (cross) no INTERNET | — | no network permission in merged manifest | script | `grep -c "android.permission.INTERNET" <merged manifest>` → 0 | ❌ W0 | ⬜ pending |
+| 01-03-T1 | 01-03 | 2 | PLAY-01 | T-01-06, T-01-07 | own-package commands, validated Bundles | build + APK/manifest checks (tracer) | `./gradlew.bat assembleDebug lintDebug` + APK `assets/sounds/pink.flac` stored + merged-manifest service check | ❌ W0 | ⬜ pending |
+| 01-03-T2 | 01-03 | 2 | PLAY-01, PLAY-05, PLAY-06, TIME-03 | — | N/A | unit (virtual time) | `./gradlew.bat testDebugUnitTest --tests "pl.usypianka.domain.SessionTimelineTest" --tests "pl.usypianka.domain.SessionEngineTest"` | ❌ W0 | ⬜ pending |
+| 01-02-T2/T3 | 01-02 | 1 | LIB-01, PLAY-02 | T-01-SC, T-01-04 | packages gated; asset level/peak gated | script | `"$HOME/.venvs/usypianka-tools/Scripts/python.exe" tools/verify_assets.py --expect main app/src/main/assets/sounds` (+ `--expect debug`, `--self-test`) | ❌ W0 | ⬜ pending |
+| 01-04-T1..T3 | 01-04 | 3 | PLAY-02 | T-01-10, T-01-11 | spike code debug-only | build + device spike (human) | `./gradlew.bat assembleDebug assembleRelease lintDebug testDebugUnitTest` + release-APK exclusion check; LoopProbe `discontinuities=0 underruns=0` on the user's phone (01-SPIKE.md) | ❌ W0 | ⬜ pending |
+| 01-05-T1/T2 | 01-05 | 3 | TIME-01, TIME-02, TIME-03 | T-01-12 | custom duration range-validated | unit | `./gradlew.bat testDebugUnitTest --tests "pl.usypianka.ui.PlayerUiStateTest"` | ❌ W0 | ⬜ pending |
+| 01-06-T1/T2 | 01-06 | 4 | PLAY-01, TIME-01..03, UI-01, UI-02 | T-01-13, T-01-14 | dialog input filtered | build + lint + manual | `./gradlew.bat testDebugUnitTest assembleDebug lintDebug` (MissingTranslation, MissingQuantity) + Polish plural grep | ❌ W0 | ⬜ pending |
+| 01-01-T2, 01-07-T2 | 01-01, 01-07 | 1, 5 | UI-01, UI-02 | T-01-01 | N/A | static + lint + manual | `./gradlew.bat assembleDebug lintDebug` + themes/v31 splash + generated locale config checks | ❌ W0 | ⬜ pending |
+| 01-07-T1 | 01-07 | 5 | PLAY-01 (D-05 preview) | T-01-16 | preview below slider level | build + manual | `./gradlew.bat testDebugUnitTest assembleDebug lintDebug` + PreviewPlayer envelope greps | ❌ W0 | ⬜ pending |
+| 01-01-T2, 01-03-T1, 01-07-T3 | 01-01, 01-03, 01-07 | 1, 2, 5 | (cross) no INTERNET, release R8 | T-01-01, T-01-15 | no network permission in debug/release merged manifests; release not debuggable | script | merged-manifest negative grep for the internet permission; `./gradlew.bat assembleRelease` + `apksigner verify` on the smoke APK | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
