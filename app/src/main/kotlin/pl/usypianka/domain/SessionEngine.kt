@@ -1,0 +1,96 @@
+package pl.usypianka.domain
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+
+enum class Noise(val assetPath: String) {
+    WHITE("sounds/white.flac"),
+    PINK("sounds/pink.flac"),
+    BROWN("sounds/brown.flac"),
+}
+
+sealed interface SessionState {
+    data object Idle : SessionState
+    data class Running(val noise: Noise, val endAtMs: Long) : SessionState
+}
+
+interface AudioOutput {
+    fun startLoop(assetPath: String)
+    fun setVolume(amplitude: Float)
+    fun stopAndRelease()
+}
+
+class SessionEngine(
+    private val output: AudioOutput,
+    private val scope: CoroutineScope,
+    private val state: MutableStateFlow<SessionState>,
+    private val now: () -> Long,
+    private val fadeInMs: Long = 5_000,
+    private val fadeOutMs: Long = 10_000,
+    private val stopRampMs: Long = 1_500,
+) {
+    private var timeline: SessionTimeline? = null
+    private var sliderPos = VolumeMap.DEFAULT
+    private var ticker: Job? = null
+
+    fun start(noise: Noise, durationMs: Long, volume: Float, assetPath: String = noise.assetPath) {
+        if (timeline != null) {                       // restart during a stop ramp
+            ticker?.cancel(); output.setVolume(0f); output.stopAndRelease()
+        }
+        val t0 = now()
+        sliderPos = volume
+        val tl = SessionTimeline(t0, t0 + durationMs, fadeInMs, fadeOutMs)
+        timeline = tl
+        output.setVolume(0f)                          // never start audible
+        output.startLoop(assetPath)
+        state.value = SessionState.Running(noise, tl.endMs)
+        launchTicker()
+    }
+
+    fun extend(addMs: Long) {
+        val tl = timeline ?: return
+        val running = state.value as? SessionState.Running ?: return
+        tl.extend(now(), addMs)
+        state.value = running.copy(endAtMs = tl.endMs)
+    }
+
+    fun stop() {                                      // UI returns to Idle at once (D-13); audio ramps down in the background
+        val tl = timeline ?: return
+        if (state.value is SessionState.Idle) return
+        tl.beginStop(now(), stopRampMs)
+        state.value = SessionState.Idle
+    }
+
+    fun setVolume(volume: Float) {                    // immediate (D-07)
+        sliderPos = volume
+        timeline?.let { apply(it, now()) }
+    }
+
+    private fun apply(tl: SessionTimeline, t: Long) =
+        output.setVolume(Gain.amplitude(VolumeMap.sliderToDb(sliderPos) + tl.offsetDb(t)))
+
+    private fun launchTicker() {
+        ticker?.cancel()
+        ticker = scope.launch {
+            while (isActive) {
+                val tl = timeline ?: break
+                val t = now()
+                if (tl.isFinished(t)) { finish(); break }
+                apply(tl, t)
+                val inFade = tl.offsetDb(t) < -0.001 || tl.remainingMs(t) <= fadeOutMs + 1_000
+                delay(if (inFade) 20L else 500L)
+            }
+        }
+    }
+
+    private fun finish() {
+        timeline = null
+        output.setVolume(0f)
+        output.stopAndRelease()
+        state.value = SessionState.Idle
+    }
+}

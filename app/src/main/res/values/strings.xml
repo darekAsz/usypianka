@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Usypianka</string>
+    <string name="action_start">Start</string>
+    <string name="action_stop">Stop</string>
+    <string name="notification_channel_name">Playback</string>
+    <string name="noise_white_name">White noise</string>
+    <string name="noise_pink_name">Pink noise</string>
+    <string name="noise_brown_name">Brown noise</string>
 </resources>

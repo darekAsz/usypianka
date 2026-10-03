@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_start">Start</string>
+    <string name="action_stop">Stop</string>
+    <string name="notification_channel_name">Odtwarzanie</string>
+    <string name="noise_white_name">Szum biały</string>
+    <string name="noise_pink_name">Szum różowy</string>
+    <string name="noise_brown_name">Szum brązowy</string>
+</resources>
