@@ -33,11 +33,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Podczas odtwarzania aplikacja pokazuje odliczanie pozostałego czasu; po zablokowaniu ekranu dźwięk gra dalej, a po upływie czasu wycisza się przez kilka sekund do ciszy i odtwarzanie kończy się samo, bez nagłego urwania
   4. Cała aplikacja ma ciemny interfejs bez białego błysku przy starcie i wyświetla się po polsku lub angielsku zgodnie z językiem telefonu, z poprawną odmianą liczebników („1 minuta / 2 minuty / 5 minut”)
 
-**Plans**: 7 plans (5 waves)
+**Plans**: 1/7 plans executed (5 waves)
 
 Plans:
 **Wave 1**
-- [ ] 01-01-PLAN.md — Toolchain (SDK 37, Gradle 9.6.0) + installable dark app shell (wave 1)
+- [x] 01-01-PLAN.md — Toolchain (SDK 37, Gradle 9.6.0) + installable dark app shell (wave 1)
 - [ ] 01-02-PLAN.md — Noise asset pipeline: legitimacy gate, generator + verifier, white/pink/brown FLAC + debug spike assets (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -154,7 +154,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Odtwarzanie z timerem | 0/7 | Planned | - |
+| 1. Odtwarzanie z timerem | 1/7 | In Progress|  |
 | 2. Poziom dB i tryby wyciszania | 0/TBD | Not started | - |
 | 3. Noc bez przerw i test w Google Play | 0/TBD | Not started | - |
 | 4. Miernik dB i kalibracja mikrofonem | 0/TBD | Not started | - |
