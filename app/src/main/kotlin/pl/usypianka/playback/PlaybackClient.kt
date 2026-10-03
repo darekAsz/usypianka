@@ -28,13 +28,14 @@ class PlaybackClient(context: Context) {
         future = null
     }
 
-    fun start(noise: Noise, durationMs: Long, volume: Float) {
+    fun start(noise: Noise, durationMs: Long, volume: Float, debugAssetPath: String? = null) {
         send(
             PlaybackCommands.ACTION_START,
             Bundle().apply {
                 putString(PlaybackCommands.KEY_NOISE, noise.name)
                 putLong(PlaybackCommands.KEY_DURATION_MS, durationMs)
                 putFloat(PlaybackCommands.KEY_VOLUME, volume)
+                if (debugAssetPath != null) putString(PlaybackCommands.KEY_DEBUG_ASSET, debugAssetPath)
             },
         )
     }
