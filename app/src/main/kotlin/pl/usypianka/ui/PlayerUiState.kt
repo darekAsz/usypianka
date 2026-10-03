@@ -25,6 +25,12 @@ sealed interface CustomDurationResult {
 
 data class DurationParts(val hours: Int, val minutes: Int)
 
+/** Start stays disabled this long after Stop so a new session never overlaps the quick-stop ramp (D-13). */
+const val STOP_COOLDOWN_MS = 1_500L
+
+/** The "+5 min" extension step (D-17). */
+const val EXTEND_STEP_MS = 300_000L
+
 /**
  * Immutable state of the player screen. Pure Kotlin so the screen stays a thin renderer.
  * Every launch starts from these defaults; nothing is persisted (D-09).
@@ -41,12 +47,35 @@ data class PlayerUiState(
             is DurationChoice.Preset -> d.preset.minutes * 60_000L
             is DurationChoice.Custom -> d.ms
         }
+
+    val isRunning: Boolean get() = session is SessionState.Running
+    val playingNoise: Noise? get() = (session as? SessionState.Running)?.noise
+
+    /** Noise tiles and time chips are locked while a session runs (D-02); the volume slider is not. */
+    val selectionEnabled: Boolean get() = !isRunning
+    val extendVisible: Boolean get() = isRunning
+
+    /** The 3-s tile preview is only for idle (D-05). */
+    val previewAvailable: Boolean get() = !isRunning
+
+    fun startEnabled(nowMs: Long): Boolean = !isRunning && nowMs >= startCooldownUntilMs
+
+    /** Source of the countdown (TIME-03): never negative, null when idle. */
+    fun remainingMs(nowMs: Long): Long? =
+        (session as? SessionState.Running)?.let { (it.endAtMs - nowMs).coerceAtLeast(0L) }
 }
 
-fun PlayerUiState.selectNoise(noise: Noise): PlayerUiState = copy(selectedNoise = noise)
+fun PlayerUiState.selectNoise(noise: Noise): PlayerUiState =
+    if (isRunning) this else copy(selectedNoise = noise)
 
 fun PlayerUiState.selectPreset(preset: TimePreset): PlayerUiState =
-    copy(duration = DurationChoice.Preset(preset))
+    if (isRunning) this else copy(duration = DurationChoice.Preset(preset))
+
+fun PlayerUiState.withSession(session: SessionState): PlayerUiState = copy(session = session)
+
+/** Call when the parent presses Stop; keeps Start disabled for [STOP_COOLDOWN_MS]. */
+fun PlayerUiState.onStopRequested(nowMs: Long): PlayerUiState =
+    copy(startCooldownUntilMs = nowMs + STOP_COOLDOWN_MS)
 
 private const val MAX_CUSTOM_DIGITS = 2
 
@@ -58,6 +87,7 @@ private fun String.isDigitsOnly(): Boolean = all { it in '0'..'9' }
  * the state.
  */
 fun PlayerUiState.applyCustomDuration(hoursText: String, minutesText: String): CustomDurationResult {
+    if (isRunning) return CustomDurationResult.Locked
     val h = hoursText.trim()
     val m = minutesText.trim()
     if (!h.isDigitsOnly() || !m.isDigitsOnly()) return CustomDurationResult.InvalidNumber
