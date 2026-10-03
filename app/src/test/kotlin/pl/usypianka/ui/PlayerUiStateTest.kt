@@ -1,6 +1,8 @@
 package pl.usypianka.ui
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import pl.usypianka.domain.Noise
@@ -134,6 +136,89 @@ class PlayerUiStateTest {
     fun nanVolumeIsIgnored() {
         val s = PlayerUiState().withVolume(0.6f)
         assertEquals(0.6f, s.withVolume(Float.NaN).volume)
+    }
+
+    // --- session binding: locks while playing (D-02, D-17, D-05) ---
+
+    private fun running() = PlayerUiState().withSession(SessionState.Running(Noise.BROWN, 1_000_000L))
+
+    @Test
+    fun runningSessionSetsTheDerivedFlags() {
+        val s = running()
+        assertTrue(s.isRunning)
+        assertEquals(Noise.BROWN, s.playingNoise)
+        assertFalse(s.selectionEnabled)
+        assertTrue(s.extendVisible)
+        assertFalse(s.previewAvailable)
+        assertFalse(s.startEnabled(0L))
+    }
+
+    @Test
+    fun idleStateHasNoPlayingNoiseAndAllowsSelectionAndPreview() {
+        val s = PlayerUiState()
+        assertFalse(s.isRunning)
+        assertNull(s.playingNoise)
+        assertTrue(s.selectionEnabled)
+        assertFalse(s.extendVisible)
+        assertTrue(s.previewAvailable)
+        assertTrue(s.startEnabled(0L))
+    }
+
+    @Test
+    fun noiseAndChipsAreLockedWhileRunning() {
+        val s = running()
+        assertEquals(s, s.selectNoise(Noise.WHITE))
+        assertEquals(s, s.selectPreset(TimePreset.M60))
+    }
+
+    @Test
+    fun customTimeIsLockedWhileRunning() {
+        assertEquals(CustomDurationResult.Locked, running().applyCustomDuration("1", "0"))
+    }
+
+    @Test
+    fun volumeStaysLiveWhileRunning() {
+        assertEquals(0.8f, running().withVolume(0.8f).volume)
+    }
+
+    // --- countdown source (TIME-03) ---
+
+    @Test
+    fun remainingTimeIsEndMinusNowAndNeverNegative() {
+        val s = running()
+        assertEquals(600_000L, s.remainingMs(400_000L))
+        assertEquals(0L, s.remainingMs(1_200_000L))
+    }
+
+    @Test
+    fun remainingTimeIsNullWhenIdle() {
+        assertNull(PlayerUiState().remainingMs(123L))
+    }
+
+    // --- Start cooldown after Stop (D-13) ---
+
+    @Test
+    fun startStaysDisabledForOneAndAHalfSecondsAfterStop() {
+        val s = running().onStopRequested(10_000L).withSession(SessionState.Idle)
+        assertEquals(11_500L, s.startCooldownUntilMs)
+        assertFalse(s.startEnabled(11_499L))
+        assertTrue(s.startEnabled(11_500L))
+    }
+
+    @Test
+    fun returningToIdleKeepsTheSelectionAndReenablesControls() {
+        val picked = PlayerUiState().selectNoise(Noise.WHITE).selectPreset(TimePreset.M30)
+        val s = picked.withSession(SessionState.Running(Noise.WHITE, 1_000L)).withSession(SessionState.Idle)
+        assertEquals(Noise.WHITE, s.selectedNoise)
+        assertEquals(DurationChoice.Preset(TimePreset.M30), s.duration)
+        assertTrue(s.selectionEnabled)
+        assertTrue(s.previewAvailable)
+    }
+
+    @Test
+    fun constantsMatchTheDecisions() {
+        assertEquals(300_000L, EXTEND_STEP_MS)
+        assertEquals(1_500L, STOP_COOLDOWN_MS)
     }
 
     // --- splitDuration (plural formatting input) ---
