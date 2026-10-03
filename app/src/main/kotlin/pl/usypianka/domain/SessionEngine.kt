@@ -36,12 +36,14 @@ class SessionEngine(
     private var timeline: SessionTimeline? = null
     private var sliderPos = VolumeMap.DEFAULT
     private var ticker: Job? = null
+    private var stopping = false
 
     fun start(noise: Noise, durationMs: Long, volume: Float, assetPath: String = noise.assetPath) {
         if (timeline != null) {                       // restart during a stop ramp
             ticker?.cancel(); output.setVolume(0f); output.stopAndRelease()
         }
         val t0 = now()
+        stopping = false
         sliderPos = volume
         val tl = SessionTimeline(t0, t0 + durationMs, fadeInMs, fadeOutMs)
         timeline = tl
@@ -62,7 +64,9 @@ class SessionEngine(
         val tl = timeline ?: return
         if (state.value is SessionState.Idle) return
         tl.beginStop(now(), stopRampMs)
+        stopping = true
         state.value = SessionState.Idle
+        launchTicker()                                // wake the 500 ms body tick so the ramp starts at once, without a step
     }
 
     fun setVolume(volume: Float) {                    // immediate (D-07)
@@ -81,7 +85,7 @@ class SessionEngine(
                 val t = now()
                 if (tl.isFinished(t)) { finish(); break }
                 apply(tl, t)
-                val inFade = tl.offsetDb(t) < -0.001 || tl.remainingMs(t) <= fadeOutMs + 1_000
+                val inFade = stopping || tl.offsetDb(t) < -0.001 || tl.remainingMs(t) <= fadeOutMs + 1_000
                 delay(if (inFade) 20L else 500L)
             }
         }
@@ -89,6 +93,7 @@ class SessionEngine(
 
     private fun finish() {
         timeline = null
+        stopping = false
         output.setVolume(0f)
         output.stopAndRelease()
         state.value = SessionState.Idle
