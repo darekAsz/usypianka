@@ -180,6 +180,37 @@ class PlayerUiStateTest {
     }
 
     @Test
+    fun tileTapDuringTheStopCooldownStillSelectsTheNoiseButDoesNotPreview() {     // WR-01
+        val stopped = running().onStopRequested(10_000L).withSession(SessionState.Idle, 10_000L)
+        assertTrue(stopped.canSelectNoise(10_500L))
+        assertFalse(stopped.previewAvailable(10_500L))
+
+        val tap = stopped.onNoiseTapped(Noise.WHITE, 10_500L)
+        assertEquals(Noise.WHITE, tap.state.selectedNoise)
+        assertFalse(tap.playPreview)
+    }
+
+    @Test
+    fun tileTapOnAnIdlePlayerSelectsAndPreviews() {
+        val tap = PlayerUiState().onNoiseTapped(Noise.WHITE, 0L)
+        assertEquals(Noise.WHITE, tap.state.selectedNoise)
+        assertTrue(tap.playPreview)
+    }
+
+    @Test
+    fun tileTapIsIgnoredWhileRunningOrWhileAStartIsInFlight() {
+        val r = running()
+        val running = r.onNoiseTapped(Noise.WHITE, 0L)
+        assertEquals(r, running.state)
+        assertFalse(running.playPreview)
+
+        val pending = PlayerUiState().onStartRequested(1_000L)
+        val tap = pending.onNoiseTapped(Noise.WHITE, 1_100L)
+        assertEquals(Noise.PINK, tap.state.selectedNoise)
+        assertFalse(tap.playPreview)
+    }
+
+    @Test
     fun noiseAndChipsAreLockedWhileRunning() {
         val s = running()
         assertEquals(s, s.selectNoise(Noise.WHITE))

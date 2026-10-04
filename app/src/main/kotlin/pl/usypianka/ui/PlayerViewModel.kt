@@ -42,18 +42,20 @@ class PlayerViewModel(
     }
 
     /**
-     * Tapping a tile selects it and plays the 3-s preview (D-05). Ignored while a session runs; a second tap on
-     * the tile that is previewing stops it.
+     * Tapping a tile selects it and plays the 3-s preview (D-05). Ignored while a session runs or a Start is in flight;
+     * during the Stop cooldown the noise is still selected but no preview plays (WR-01). A second tap on the tile that
+     * is previewing stops it.
      */
     fun onNoiseSelected(noise: Noise) {
         val s = _state.value
-        if (!s.previewAvailable(now())) return
-        if (previewHolder.isInitialized() && preview.playingNoise.value == noise) {
+        val t = now()
+        if (s.previewAvailable(t) && previewHolder.isInitialized() && preview.playingNoise.value == noise) {
             preview.stop()
             return
         }
-        _state.update { it.selectNoise(noise) }
-        preview.play(noise, s.volume)
+        val tap = s.onNoiseTapped(noise, t)
+        _state.update { it.onNoiseTapped(noise, t).state }
+        if (tap.playPreview) preview.play(noise, s.volume)
     }
 
     /** The preview must never outlive the screen (D-05): called from the screen's ON_STOP. */

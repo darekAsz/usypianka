@@ -70,12 +70,22 @@ data class PlayerUiState(
     val extendVisible: Boolean get() = isRunning
 
     /**
-     * The 3-s tile preview is only for a really idle player (D-05): not while a Start is in flight and not during the
-     * Stop cooldown, when the service is still ramping down (WR-02). The same condition as [startEnabled].
+     * A tile tap may change the selected noise whenever no session runs and no Start is in flight (the session is about
+     * to start with the current noise). The Stop cooldown does not matter here: the tiles look enabled then, so the
+     * tap must not be lost (WR-01). Playing the preview is the stricter [previewAvailable].
      */
-    fun previewAvailable(nowMs: Long): Boolean = startEnabled(nowMs)
+    fun canSelectNoise(nowMs: Long): Boolean = !isRunning && !startPending(nowMs)
 
-    fun startEnabled(nowMs: Long): Boolean = !isRunning && !startPending(nowMs) && nowMs >= startCooldownUntilMs
+    /**
+     * The 3-s tile preview is only for a really quiet player (D-05): not while a Start is in flight and not during the
+     * Stop cooldown, when the service is still ramping down (WR-02). Same condition as [startEnabled] by design: both
+     * need silence from the service.
+     */
+    fun previewAvailable(nowMs: Long): Boolean = isQuiet(nowMs)
+
+    fun startEnabled(nowMs: Long): Boolean = isQuiet(nowMs)
+
+    private fun isQuiet(nowMs: Long): Boolean = !isRunning && !startPending(nowMs) && nowMs >= startCooldownUntilMs
 
     /** A Start was sent but the service has not reported Running yet. */
     fun startPending(nowMs: Long): Boolean {
@@ -93,6 +103,16 @@ data class PlayerUiState(
 
 fun PlayerUiState.selectNoise(noise: Noise): PlayerUiState =
     if (isRunning) this else copy(selectedNoise = noise)
+
+/**
+ * Result of a tile tap: the new state and whether the 3-s preview should play. During the Stop cooldown the noise is
+ * selected without a preview (WR-01 / WR-02); while running or with a Start in flight the tap is ignored.
+ */
+data class NoiseTapResult(val state: PlayerUiState, val playPreview: Boolean)
+
+fun PlayerUiState.onNoiseTapped(noise: Noise, nowMs: Long): NoiseTapResult =
+    if (!canSelectNoise(nowMs)) NoiseTapResult(this, playPreview = false)
+    else NoiseTapResult(selectNoise(noise), playPreview = previewAvailable(nowMs))
 
 fun PlayerUiState.selectPreset(preset: TimePreset): PlayerUiState =
     if (isRunning) this else copy(duration = DurationChoice.Preset(preset))
