@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 import pl.usypianka.AppContainer
 import pl.usypianka.UsypiankaApp
 import pl.usypianka.domain.Noise
+import pl.usypianka.playback.PreviewPlayer
 
 /**
  * Binds the pure [PlayerUiState] to the playback service: session state flows in from
@@ -22,11 +24,16 @@ import pl.usypianka.domain.Noise
  */
 class PlayerViewModel(
     private val container: AppContainer,
+    previewFactory: (CoroutineScope) -> PreviewPlayer,
     private val now: () -> Long = SystemClock::elapsedRealtime,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PlayerUiState())
     val state: StateFlow<PlayerUiState> = _state.asStateFlow()
+
+    // Created on the first tile tap, so the second ExoPlayer does not exist until a preview is wanted.
+    private val previewHolder = lazy { previewFactory(viewModelScope) }
+    private val preview: PreviewPlayer get() = previewHolder.value
 
     init {
         viewModelScope.launch {
@@ -34,8 +41,28 @@ class PlayerViewModel(
         }
     }
 
+    /**
+     * Tapping a tile selects it and plays the 3-s preview (D-05). Ignored while a session runs; a second tap on
+     * the tile that is previewing stops it.
+     */
     fun onNoiseSelected(noise: Noise) {
+        val s = _state.value
+        if (!s.previewAvailable) return
+        if (previewHolder.isInitialized() && preview.playingNoise.value == noise) {
+            preview.stop()
+            return
+        }
         _state.update { it.selectNoise(noise) }
+        preview.play(noise, s.volume)
+    }
+
+    /** The preview must never outlive the screen (D-05): called from the screen's ON_STOP. */
+    fun onScreenStopped() {
+        stopPreview()
+    }
+
+    private fun stopPreview() {
+        if (previewHolder.isInitialized()) preview.stop()
     }
 
     fun onPresetSelected(preset: TimePreset) {
@@ -59,6 +86,7 @@ class PlayerViewModel(
     fun onStartClicked() {
         val s = _state.value
         if (!s.startEnabled(now())) return
+        stopPreview()   // the session's own fade-in starts from silence, so the 150 ms overlap is inaudible
         container.playbackClient.start(s.selectedNoise, s.durationMs, s.volume)
     }
 
@@ -72,9 +100,16 @@ class PlayerViewModel(
         if (_state.value.isRunning) container.playbackClient.extend(EXTEND_STEP_MS)
     }
 
+    override fun onCleared() {
+        if (previewHolder.isInitialized()) preview.release()
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer { PlayerViewModel((this[APPLICATION_KEY] as UsypiankaApp).container) }
+            initializer {
+                val app = this[APPLICATION_KEY] as UsypiankaApp
+                PlayerViewModel(app.container, { scope -> PreviewPlayer(app, scope) })
+            }
         }
     }
 }

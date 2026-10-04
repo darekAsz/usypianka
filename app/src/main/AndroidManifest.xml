@@ -9,6 +9,8 @@
     <application
         android:name=".UsypiankaApp"
         android:allowBackup="false"
+        android:icon="@drawable/ic_launcher"
+        android:roundIcon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.Usypianka">

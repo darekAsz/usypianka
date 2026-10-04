@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notification small icon: opaque single-colour crescent, tinted by the system. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12.74,2.03A10,10 0 1,0 21.15,16.03A8.18,8.18 0 1,1 12.74,2.03Z" />
+</vector>

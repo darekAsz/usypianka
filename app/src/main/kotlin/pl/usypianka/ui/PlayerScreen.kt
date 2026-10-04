@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -81,6 +82,9 @@ fun PlayerScreen(viewModel: PlayerViewModel) {
             }
         }
     }
+
+    // A tile preview never plays on after the app leaves the foreground (D-05).
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.onScreenStopped() }
 
     // Notification permission: asked once per app run on the first Start tap; playback never waits for it.
     val context = LocalContext.current
