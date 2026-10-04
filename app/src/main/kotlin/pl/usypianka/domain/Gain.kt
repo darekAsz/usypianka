@@ -80,7 +80,9 @@ class SessionTimeline(
     fun beginStop(now: Long, baseDb: Double, rampMs: Long = STOP_RAMP_MS) {      // D-13: from the *current* offset
         if (stopping) return
         stopFromDb = offsetDb(now, baseDb); stopStartMs = now; stopDurMs = rampMs.coerceAtLeast(1L); stopping = true
-        stopToDb = -rangeDb
+        // Ends at the same absolute floor as the final fade (G-01-2b); minOf keeps a Stop during the fade-in or deep
+        // in the final fade from ever rising.
+        stopToDb = minOf(stopFromDb, -endSpanDb(baseDb))
     }
 }
 
