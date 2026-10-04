@@ -24,6 +24,14 @@ android {
         noCompress += listOf("flac", "wav")
         generateLocaleConfig = true      // needs res/resources.properties (unqualifiedResLocale=en-US)
     }
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // No signing config here: Play App Signing / upload key is Phase 3/6 work.
+        }
+    }
 }
 
 kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }
