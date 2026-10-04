@@ -38,7 +38,16 @@ covered_files:
   - app/src/test/kotlin/pl/usypianka/ui/PlayerUiStateTest.kt
 covered_digest: "v2:sha256:6f74ed676d4d1a5c5009597d5f59ca7fdea8e0d7b42d6bf3e3e9e4be63b8a1f2"
 behavior_unverified: 0
-overrides_applied: 0
+overrides:
+  - must_have: "Dźwięk gra w pętli bez słyszalnych przerw ani kliknięć na łączeniu (sprawdzone na min. 2–3 fizycznych telefonach, w tym Xiaomi lub Samsung)"
+    reason: "Only one phone (Xiaomi M2103K19PG, Android 11) was available. Gapless verified there (0 discontinuities, 0 underruns, clean ear test, screen on and locked). Multi-OEM re-run carried to before the Play release per 01-SPIKE.md."
+    accepted_by: "DarekAsz"
+    accepted_at: "2026-10-04T14:15:56Z"
+  - must_have: "Cała aplikacja ciemna, bez białego błysku przy starcie (w tym splash Androida 12+)"
+    reason: "No Android 12+ phone available to the developer. Static evidence only (windowBackground #0B0B0D, windowSplashScreenBackground in values-v31). Cold-start check carried to before the Play release."
+    accepted_by: "DarekAsz"
+    accepted_at: "2026-10-04T14:15:56Z"
+overrides_applied: 2
 re_verification:
   previous_status: human_needed
   previous_score: "2/4 roadmap success criteria fully verified (SC1, SC3)"

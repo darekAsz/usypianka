@@ -1,14 +1,14 @@
 ---
-status: partial
+status: complete
 phase: 01-odtwarzanie-z-timerem
 source: [01-VERIFICATION.md]
 started: 2026-10-04T13:38:51Z
-updated: 2026-10-04T14:01:09Z
+updated: 2026-10-04T14:15:56Z
 ---
 
 ## Current Test
 
-[testing paused — 2 items outstanding]
+[testing complete]
 
 ## Tests
 
@@ -34,15 +34,13 @@ result: pass
 
 ### 6. Gapless loop on a second and third device (ROADMAP SC2 asks for 2-3 phones, incl. Samsung or Xiaomi)
 expected: Run the Usypianka Spike procedure from 01-SPIKE.md on at least one Samsung and one more phone, ideally Android 14+. Or accept the deviation as an override (see Overrides) and carry the multi-device run to Phase 3 / before the Play release.
-result: blocked
-blocked_by: physical-device
-reason: "blocked" (no Samsung / second phone available to run the 01-SPIKE.md procedure; carry to Phase 3 / pre-Play release)
+result: skipped
+reason: "Deferred follow-up: developer has only one phone (Xiaomi M2103K19PG, Android 11) and cannot test on more devices; deviation from SC2 accepted (see 01-VERIFICATION.md overrides); multi-device gapless run carried to before the Play release"
 
 ### 7. Cold start has no white flash (UI-01), including Android 12+ splash
 expected: Force-stop the app, launch from the launcher in a dark room. The first frame is near-black (#0B0B0D), no white frame; also on an Android 12+ phone if available.
-result: blocked
-blocked_by: physical-device
-reason: "blocked" (no Android 12+ phone available; test device is Xiaomi on Android 11)
+result: skipped
+reason: "Deferred follow-up: developer has no Android 12+ phone and cannot test the 12+ splash; deviation from SC4 accepted (see 01-VERIFICATION.md overrides); static evidence only (windowBackground, windowSplashScreenBackground in values-v31)"
 
 ### 8. Re-run of the full device smoke on the final build (regression after plans 01-08..01-10)
 expected: Install the current debug or release build. Start a 1-min session and lock the screen at once: fade-in, playback and fade-out still work; the notification appears with no play/pause/seek buttons; Start, +1/+5 min, Stop and the slider work; Stop then reopen shows Idle.
@@ -58,7 +56,20 @@ total: 9
 passed: 7
 issues: 0
 pending: 0
-skipped: 0
-blocked: 2
+skipped: 2
+blocked: 0
 
 ## Gaps
+
+[none]
+
+## Deferred Follow-Ups
+
+```yaml
+- test: 6
+  idea: "Gapless loop check on a Samsung and one more phone (01-SPIKE.md procedure) - user: nie będę w stanie sprawdzić tego na większej ilości telefonów"
+  deferred_at: 2026-10-04
+- test: 7
+  idea: "Cold start without white flash on an Android 12+ phone (splash) - user: nie będę w stanie sprawdzić tego na większej ilości telefonów"
+  deferred_at: 2026-10-04
+```
