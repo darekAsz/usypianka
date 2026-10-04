@@ -51,6 +51,7 @@ class PreviewPlayer(
 
     private var timeline: SessionTimeline? = null
     private var ticker: Job? = null
+    private var baseDb = Double.NEGATIVE_INFINITY
 
     init {
         player.addListener(object : Player.Listener {
@@ -64,7 +65,7 @@ class PreviewPlayer(
         val t0 = now()
         val envelope = SessionTimeline(t0, t0 + PREVIEW_MS, fadeInMs = 400, fadeOutMs = 400, rangeDb = 40.0)
         // Never louder than the slider (slider 0 % gives -infinity dB, which is silent).
-        val levelDb = VolumeMap.sliderToDb(sliderPosition) - 10.0
+        baseDb = VolumeMap.sliderToDb(sliderPosition) - 10.0
         timeline = envelope
         _playingNoise.value = noise
         player.volume = 0f
@@ -73,7 +74,7 @@ class PreviewPlayer(
         player.play()
         ticker = scope.launch {
             while (!envelope.isFinished(now())) {
-                player.volume = Gain.amplitude(levelDb + envelope.offsetDb(now()))
+                player.volume = Gain.amplitude(baseDb + envelope.offsetDb(now(), baseDb))
                 delay(TICK_MS)
             }
             finish()
@@ -82,7 +83,7 @@ class PreviewPlayer(
 
     /** Fades out over 150 ms (no click) and ends; does nothing when no preview runs. */
     fun stop() {
-        timeline?.beginStop(now(), 150)
+        timeline?.beginStop(now(), baseDb, 150)
     }
 
     fun release() {
