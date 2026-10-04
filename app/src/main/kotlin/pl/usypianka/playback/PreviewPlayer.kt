@@ -21,9 +21,10 @@ import pl.usypianka.domain.SessionTimeline
 import pl.usypianka.domain.VolumeMap
 
 /**
- * The 3-second tile preview (D-05). It lives in the UI process on its own ExoPlayer: no audio focus, no
- * wake lock, no media session and no service, so it can never keep the app alive or show a notification.
- * It reuses [SessionTimeline] for a dB-linear envelope and always starts from silence. The ticker runs on
+ * The 3-second tile preview (D-05). It plays at exactly the slider level (user decision after UAT G-01-7, no
+ * reduction) and follows slider moves via [setSliderPosition]. It lives in the UI process on its own ExoPlayer:
+ * no audio focus, no wake lock, no media session and no service, so it can never keep the app alive or show a
+ * notification. It reuses [SessionTimeline] for a dB-linear envelope and always starts from silence. The ticker runs on
  * [scope] (the ViewModel scope, main thread), which is also the player's application thread.
  */
 class PreviewPlayer(
@@ -59,13 +60,13 @@ class PreviewPlayer(
         })
     }
 
-    /** Starts a quiet preview of [noise], 10 dB below the slider level; a running preview is cut first. */
+    /** Starts a preview of [noise] at the slider level (a 0 % slider stays silent); a running preview is cut first. */
     fun play(noise: Noise, sliderPosition: Float) {
         finish()
         val t0 = now()
         val envelope = SessionTimeline(t0, t0 + PREVIEW_MS, fadeInMs = 400, fadeOutMs = 400, rangeDb = 40.0)
-        // Never louder than the slider (slider 0 % gives -infinity dB, which is silent).
-        baseDb = VolumeMap.sliderToDb(sliderPosition) - 10.0
+        // Exactly the slider level (slider 0 % gives -infinity dB, which is silent).
+        baseDb = VolumeMap.sliderToDb(sliderPosition)
         timeline = envelope
         _playingNoise.value = noise
         player.volume = 0f
@@ -79,6 +80,12 @@ class PreviewPlayer(
             }
             finish()
         }
+    }
+
+    /** Retunes a running preview to a moved slider; the ticker picks it up within 20 ms. No-op when idle. */
+    fun setSliderPosition(position: Float) {
+        if (timeline == null || position.isNaN()) return
+        baseDb = VolumeMap.sliderToDb(position)
     }
 
     /** Fades out over 150 ms (no click) and ends; does nothing when no preview runs. */

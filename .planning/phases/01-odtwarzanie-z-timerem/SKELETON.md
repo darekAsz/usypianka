@@ -22,7 +22,7 @@ This is a greenfield repository with no toolchain. No end-to-end path can exist 
 | Output seam | `AudioOutput` interface (`startLoop`, `setVolume`, `stopAndRelease`); `ExoAudioOutput` is the only implementation | An `AudioTrack MODE_STATIC` escape hatch (if the spike fails) is a one-class swap |
 | Background playback | `PlaybackService : MediaSessionService`, `foregroundServiceType="mediaPlayback"`, default Media3 notification without transport actions (`LockedPlayer`) | Google's supported FGS host; no pause in Phase 1 (D-14) |
 | UI -> service commands | `MediaController.sendCustomCommand` with `pl.usypianka.START / EXTEND / STOP / VOLUME`, granted only to controllers whose package is our own | Same path the Phase 2 notification controls will use; untrusted controllers get read-only defaults |
-| Timing model | Pure Kotlin, clock -> gain: `gainDb = VolumeMap.sliderToDb(pos) + min(intro, outro, recovery, stop)`; clock injected (`SystemClock.elapsedRealtime` in production, virtual time in tests); ticker 20 ms in ramps, 500 ms in the body | CLAUDE.md §3.2 / §8: drift-free after wake-up, testable on the JVM, reused by Phase 2 fade modes |
+| Timing model | Pure Kotlin, clock -> gain: `gainDb = base + offsetDb(now, base)` with `base = VolumeMap.sliderToDb(pos)` and `offsetDb = min(intro, outro, recovery, stop)`; the outro and the Stop ramp end at the absolute `FADE_FLOOR_DB` (-45 dBFS, at least `MIN_FADE_SPAN_DB` = 10 dB below the slider), so `offsetDb(now, baseDb)` takes the slider level (UAT G-01-2b); clock injected (`SystemClock.elapsedRealtime` in production, virtual time in tests); ticker 20 ms in ramps, 500 ms in the body | CLAUDE.md §3.2 / §8: drift-free after wake-up, testable on the JVM, reused by Phase 2 fade modes |
 | Shared state | In-process `MutableStateFlow<SessionState>` in `AppContainer`; UI derives the countdown from `Running.endAtMs` | One write per change, survives Activity recreation |
 | Data layer | None in Phase 1 (D-09: nothing persisted). Room 2.8.x + DataStore arrive in Phase 4-5 | Avoids KSP/AGP-9 interaction until needed |
 | Auth | None (no accounts — Out of Scope) | Local player, "no data collected" |
@@ -79,30 +79,31 @@ Each later phase adds one vertical slice on top of this skeleton without alterin
 | REQ | UI-01 | Dark UI, no white flash | 01-01, 01-06, 01-07 | COVERED |
 | REQ | UI-02 | PL + EN with correct Polish plurals | 01-03, 01-06, 01-07 | COVERED |
 | CONTEXT | D-01 | One screen: tiles, chips, slider, big Start | 01-06 | COVERED |
-| CONTEXT | D-02 | Same screen while playing; Stop, countdown, noise name; tiles/chips locked; slider, Stop, +5 active | 01-05, 01-06 | COVERED |
+| CONTEXT | D-02 | Same screen while playing; Stop, countdown, noise name; tiles/chips locked; slider, Stop, +1 min, +5 min active | 01-05, 01-06, 01-10 | COVERED |
 | CONTEXT | D-03 | No brightness dimming; near-black, no white flash | 01-01, 01-07 | COVERED |
 | CONTEXT | D-04 | Tile name + short description, PL/EN | 01-06 | COVERED |
-| CONTEXT | D-05 | 3 s quiet preview with fades; re-tap/Start stops; unavailable while playing | 01-05, 01-07 | COVERED |
+| CONTEXT | D-05 | 3 s preview at the slider level, follows slider moves; fades; re-tap/Start stops; unavailable while playing | 01-05, 01-07, 01-08, 01-10 | COVERED |
 | CONTEXT | D-06 | Temporary % slider 0-100 | 01-06 | COVERED |
 | CONTEXT | D-07 | Logarithmic slider -> dBFS gain, default 30-40 %, immediate, does not break fades | 01-03, 01-04, 01-06 | COVERED |
 | CONTEXT | D-08 | Equal A-weighted loudness | 01-02 | COVERED |
 | CONTEXT | D-09 | No persistence; defaults every launch | 01-05 | COVERED |
 | CONTEXT | D-10 | 5 s fade-in | 01-03 | COVERED |
 | CONTEXT | D-11 | 10 s fade-out inside the set time; silence at 0:00; return to idle | 01-03, 01-06 | COVERED |
-| CONTEXT | D-12 | Linear in dB from -60 dB, clock-derived | 01-03 | COVERED |
-| CONTEXT | D-13 | Manual Stop: ~1.5 s fade, screen idle at once | 01-03, 01-05, 01-06 | COVERED |
+| CONTEXT | D-12 | Fade-in linear in dB from -60 dB, clock-derived; outro/Stop to absolute floor (FADE_FLOOR_DB) | 01-03, 01-08 | COVERED |
+| CONTEXT | D-13 | Manual Stop: 2.5 s fade to the floor, screen idle at once | 01-03, 01-05, 01-06, 01-08 | COVERED |
 | CONTEXT | D-14 | No pause; Start/Stop only | 01-03 | COVERED |
 | CONTEXT | D-15 | Default 15 min | 01-05 | COVERED |
 | CONTEXT | D-16 | Custom h + min, 1 min - 8 h, blocked with message | 01-05, 01-06 | COVERED |
-| CONTEXT | D-17 | +5 min, no total cap, cancels final fade smoothly | 01-03, 01-05, 01-06 | COVERED |
+| CONTEXT | D-17 | +1 min and +5 min, no total cap, cancels final fade smoothly | 01-03, 01-05, 01-06, 01-10 | COVERED |
 | CONTEXT | D-18 | Chip "15 min", countdown m:ss / h:mm:ss, Polish plurals, no concatenation | 01-03, 01-06 | COVERED |
+| CONTEXT | D-19 | Swipe from recents ends the session: Stop ramp, then the service stops; reopen = idle | 01-09 | PLANNED |
 | CONTEXT | User answer 1 | applicationId / namespace `pl.usypianka` | 01-01 | COVERED |
 | CONTEXT | User answer 2 | Unrequested pause (call, noisy, focus loss) ends the session; Phase 3 refines | 01-03 | COVERED |
 | CONTEXT | User answer 3 | POST_NOTIFICATIONS on first Start, playback regardless | 01-06 | COVERED |
 | CONTEXT | User answer 4 | Spike on ONE phone; record make/model/Android; multi-OEM risk carried | 01-04 | COVERED |
 | RESEARCH | — | compileSdk 37 + SDK platform 37.0 install; Kotlin 2.4.20 via Compose plugin; no kotlin-android / annotation processor | 01-01 | COVERED |
 | RESEARCH | — | Asset pipeline: FFT-periodic noise, brown HP 40 Hz, -26 dBFS(A), peak <= -2 dBFS, verifier | 01-02 | COVERED |
-| RESEARCH | — | `onConnectAsync` own-package commands, `LockedPlayer`, `SessionError` constants, defensive Bundle parsing, no task-removal override, `androidx.annotation.OptIn` | 01-03 | COVERED |
+| RESEARCH | — | `onConnectAsync` own-package commands, `LockedPlayer`, `SessionError` constants, defensive Bundle parsing, task removal ends the session (D-19, user decision after UAT G-01-2d), `androidx.annotation.OptIn` | 01-03, 01-09 | COVERED |
 | RESEARCH | — | LoopProbe spike instrument (TeeAudioProcessor + underruns), FLAC/WAV, screen on + locked, ear test; level tuning (A2) | 01-04 | COVERED |
 | RESEARCH | — | Start disabled ~1.5 s after Stop | 01-05 | COVERED |
 | RESEARCH | — | Orientation-agnostic scrollable layout, safeDrawing insets, Polish 4 plural forms | 01-06 | COVERED |

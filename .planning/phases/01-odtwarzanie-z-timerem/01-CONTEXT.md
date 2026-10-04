@@ -2,6 +2,7 @@
 
 **Gathered:** 2026-10-03
 **Status:** Ready for planning
+**Updated:** 2026-10-04 — zmiany po UAT (luki G-01-2, G-01-2b, G-01-2c, G-01-2d, G-01-7; plany 01-08..01-10)
 
 <domain>
 ## Phase Boundary
@@ -19,10 +20,10 @@ Poza tą fazą: suwak w dB(A) ze strefami i limitem, tryby wyciszania i wykres (
 
 ### Ekran odtwarzacza
 - **D-01:** Jeden ekran, bez nawigacji: u góry kafelki trzech szumów, pod nimi czipy czasu `15 / 30 / 45 / 60 / Inny`, na dole suwak głośności (D-07) i duży przycisk Start. Optymalizacja pod obsługę jedną ręką.
-- **D-02:** W trakcie odtwarzania zostaje ten sam ekran: Start zmienia się w Stop, nad nim pojawia się duże odliczanie pozostałego czasu i nazwa grającego szumu. Kafelki i czipy czasu są wyszarzone/zablokowane. Aktywne pozostają: suwak głośności, Stop i „+5 min” (D-17).
+- **D-02:** W trakcie odtwarzania zostaje ten sam ekran: Start zmienia się w Stop, nad nim pojawia się duże odliczanie pozostałego czasu i nazwa grającego szumu. Kafelki i czipy czasu są wyszarzone/zablokowane. Aktywne pozostają: suwak głośności, Stop, „+1 min” i „+5 min” (D-17).
 - **D-03:** Bez programowego przyciemniania jasności okna, bo ciemny motyw wystarcza (UI-01: near-black, bez czystej bieli, bez białego błysku przy starcie zgodnie z CLAUDE.md §7).
 - **D-04:** Kafelek pokazuje nazwę i krótki opis charakteru szumu (np. „Różowy — łagodniejszy, jak deszcz”, „Brązowy — głęboki, jak wodospad”). Teksty PL i EN.
-- **D-05:** Dotknięcie kafelka przed startem zaznacza szum i odtwarza krótki, cichy podgląd (~3 s, z krótkim fade-in/out, bez trzasków). Ponowne dotknięcie albo Start przerywa podgląd. W trakcie właściwego odtwarzania podgląd jest niedostępny, bo kafelki są zablokowane.
+- **D-05:** Dotknięcie kafelka przed startem zaznacza szum i odtwarza krótki podgląd (~3 s, z krótkim fade-in/out, bez trzasków) **z taką samą głośnością, jak ustawiona na suwaku**; ruch suwaka w trakcie podglądu od razu zmienia jego głośność. Ponowne dotknięcie albo Start przerywa podgląd. W trakcie właściwego odtwarzania podgląd jest niedostępny, bo kafelki są zablokowane. *Zmiana decyzji użytkownika po UAT (G-01-7): wcześniej podgląd był cichszy niż suwak.*
 
 ### Głośność w Fazie 1
 - **D-06:** Tymczasowy suwak głośności w % (0–100). W Fazie 2 zastąpi go suwak dB(A) (VOL-01..05). To świadomie tymczasowe UI, więc nie warto go dopracowywać wizualnie.
@@ -34,21 +35,25 @@ Poza tą fazą: suwak w dB(A) ze strefami i limitem, tryby wyciszania i wykres (
 - **D-10:** Fade-in trwa 5 s od startu odtwarzania (PLAY-05).
 - **D-11:** Końcowe wygaszenie trwa 10 s (PLAY-06) i **mieści się w ustawionym czasie**: przy 15 min wygaszenie zaczyna się w 14:50, a cisza zapada dokładnie w 15:00, kiedy odliczanie pokazuje 0:00. Potem odtwarzanie się zatrzymuje i ekran wraca do stanu przed startem.
 - **D-12:** Krzywa fade-in i fade-out jest liniowa w dB, od ok. −60 dB względem poziomu docelowego (potem 0 / volume 0f). Liczona z zegara (`SystemClock.elapsedRealtime()`), nie przez sumowanie kroków, zgodnie z CLAUDE.md §3.2. Ten sam mechanizm posłuży w Fazie 2.
-- **D-13:** Ręczny Stop daje szybkie wygaszenie ~1–2 s, bez trzasku i bez czekania. Ekran od razu wraca do stanu przed startem.
+  - **Korekta po UAT (G-01-2b):** fade-in zostaje −60 dB względem poziomu docelowego. Końcowe wygaszenie (D-11) i ręczny Stop (D-13) idą liniowo w dB od poziomu suwaka do **bezwzględnej podłogi** `FADE_FLOOR_DB` = −45 dBFS (zawsze co najmniej `MIN_FADE_SPAN_DB` = 10 dB poniżej suwaka) i dopiero w 0:00 / na końcu rampy głośność spada do 0. Powód: przy stałych 60 dB dźwięk znikał ok. 7 s przed 0:00 (przy suwaku domyślnym poziom −44 dBFS był już niesłyszalny). Podłoga to jedna stała do dostrojenia na urządzeniu; w Fazie 2 przejdzie na skalę dB(A).
+- **D-13:** Ręczny Stop daje szybkie wygaszenie ~1–2 s, bez trzasku i bez czekania. Ekran od razu wraca do stanu przed startem. *Po UAT: rampa trwa 2,5 s (`STOP_RAMP_MS`, uwaga użytkownika w planie 01-04) i kończy się na podłodze `FADE_FLOOR_DB` (D-12), więc jest słyszalna przez całą swoją długość.*
 - **D-14:** Brak pauzy w Fazie 1, są tylko Start i Stop. Pauza/wznowienie wchodzą w Fazie 2 razem z powiadomieniem (PLAY-04).
 
 ### Wybór czasu
 - **D-15:** Domyślnie zaznaczony czas: **15 min**.
 - **D-16:** „Inny” otwiera wybór godzin i minut (dwa pola lub kółka: godziny + minuty 0–59). Dozwolony zakres przed startem: **1 min – 8 h**. Wartości spoza zakresu są blokowane z komunikatem.
-- **D-17:** W trakcie grania dostępny jest przycisk **„+5 min”**, który wydłuża timer bez przerywania. **Bez limitu łącznego**, bo limit 8 h dotyczy tylko ustawienia przed startem. Naciśnięcie podczas końcowego wygaszenia (ostatnie 10 s) anuluje wygaszenie, płynnie przywraca głośność (jak fade-in) i dodaje 5 min. Zmiana szumu w trakcie grania nie jest dostępna (trzeba Stop → Start).
+- **D-17:** W trakcie grania dostępne są przyciski **„+1 min”** i **„+5 min”**, które wydłużają timer bez przerywania. **Bez limitu łącznego**, bo limit 8 h dotyczy tylko ustawienia przed startem. Naciśnięcie podczas końcowego wygaszenia (ostatnie 10 s) anuluje wygaszenie, płynnie przywraca głośność (jak fade-in) i dodaje 1 lub 5 min. *„+1 min” dodano na prośbę użytkownika po UAT (G-01-2c).* Zmiana szumu w trakcie grania nie jest dostępna (trzeba Stop → Start).
 - **D-18:** Format czasu: czipy jako „15 min”, odliczanie jako `mm:ss` lub `h:mm:ss` (np. `14:32`, `1:05:10`). Pełna odmiana PL przez `<plurals>` / `pluralStringResource` (one/few/many/other) w opisach i podsumowaniu wybranego czasu, np. „Gra przez 2 godziny 30 minut”. Nigdy przez sklejanie stringów.
+
+### Cykl życia sesji
+- **D-19:** Zamknięcie aplikacji przez przesunięcie jej z listy ostatnich aplikacji w trakcie sesji kończy sesję: dźwięk wycisza się jak przy ręcznym Stopie (D-13, bez trzasku), potem usługa odtwarzania się zatrzymuje, a powiadomienie znika; po ponownym otwarciu widać stan przed startem. Decyzja użytkownika po UAT (G-01-2d): zastępuje wcześniejsze domyślne zachowanie Media3 (odtwarzanie trwało dalej) oraz radę z RESEARCH, by nie nadpisywać callbacku usunięcia zadania. Implementacja w planie 01-09.
 
 ### Claude's Discretion
 - Domyślnie zaznaczony szum (np. różowy lub biały) i dokładna wartość domyślna suwaka w zakresie 30–40%.
-- Głośność podglądu (D-05): poziom suwaka obniżony o kilka–kilkanaście dB albo stały cichy poziom, byle nie głośniej niż suwak.
+- Głośność podglądu (D-05): rozstrzygnięta przez użytkownika w D-05 (poziom suwaka, UAT G-01-7).
 - Dokładny wygląd odliczania, kafelków i okna wyboru godzin/minut (Material 3, ciemny motyw); dokładna długość szybkiego Stopu w zakresie 1–2 s.
 - Długość pętli szumów (20–30 s wg CLAUDE.md §6.1), poziom normalizacji, limit szczytowy.
-- Wygląd powiadomienia w Fazie 1. Media3 `MediaSessionService` wymaga powiadomienia FGS, więc ma być minimalne, a pełne sterowanie (czas, dB, pauza) przychodzi w Fazie 2.
+- Wygląd powiadomienia w Fazie 1. Media3 `MediaSessionService` wymaga powiadomienia FGS, więc ma być minimalne, a pełne sterowanie (czas, dB, pauza) przychodzi w Fazie 2. Po UAT G-01-2 powiadomienie niesie grafikę księżyca w `MediaMetadata`, bo szablon mediów MIUI nie pokazuje małej ikony (plan 01-09).
 - Spike pętli bez przerw (ExoPlayer `REPEAT_MODE_ONE` + FLAC vs `AudioTrack` awaryjnie) zgodnie z flagą w ROADMAP.
 
 </decisions>
@@ -91,7 +96,7 @@ Poza tą fazą: suwak w dB(A) ze strefami i limitem, tryby wyciszania i wykres (
 ## Specific Ideas
 
 - Opisy kafelków w stylu: „Różowy — łagodniejszy, jak deszcz”, „Brązowy — głęboki, jak wodospad”.
-- Scenariusz „dziecko jeszcze nie śpi”: „+5 min” działa nawet w ostatnich sekundach wygaszania i przywraca dźwięk płynnie.
+- Scenariusz „dziecko jeszcze nie śpi”: „+1 min” i „+5 min” działają nawet w ostatnich sekundach wygaszania i przywraca dźwięk płynnie.
 - Cisza ma zapaść dokładnie w ustawionym czasie, a odliczanie kończy się na 0:00 razem z ciszą.
 
 </specifics>
