@@ -6,6 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import pl.usypianka.domain.Noise
+import pl.usypianka.domain.STOP_RAMP_MS
 import pl.usypianka.domain.SessionState
 import pl.usypianka.domain.VolumeMap
 
@@ -198,11 +199,11 @@ class PlayerUiStateTest {
     // --- Start cooldown after Stop (D-13) ---
 
     @Test
-    fun startStaysDisabledForOneAndAHalfSecondsAfterStop() {
+    fun startStaysDisabledUntilTheStopRampEnds() {
         val s = running().onStopRequested(10_000L).withSession(SessionState.Idle)
-        assertEquals(11_500L, s.startCooldownUntilMs)
-        assertFalse(s.startEnabled(11_499L))
-        assertTrue(s.startEnabled(11_500L))
+        assertEquals(12_500L, s.startCooldownUntilMs)
+        assertFalse(s.startEnabled(12_499L))
+        assertTrue(s.startEnabled(12_500L))
     }
 
     @Test
@@ -218,7 +219,8 @@ class PlayerUiStateTest {
     @Test
     fun constantsMatchTheDecisions() {
         assertEquals(300_000L, EXTEND_STEP_MS)
-        assertEquals(1_500L, STOP_COOLDOWN_MS)
+        assertEquals(2_500L, STOP_COOLDOWN_MS)
+        assertEquals(STOP_RAMP_MS, STOP_COOLDOWN_MS)
     }
 
     // --- splitDuration (plural formatting input) ---

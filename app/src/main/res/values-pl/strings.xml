@@ -2,8 +2,53 @@
 <resources>
     <string name="action_start">Start</string>
     <string name="action_stop">Stop</string>
+    <string name="action_extend">+5 min</string>
     <string name="notification_channel_name">Odtwarzanie</string>
     <string name="noise_white_name">Szum biały</string>
     <string name="noise_pink_name">Szum różowy</string>
     <string name="noise_brown_name">Szum brązowy</string>
+    <string name="noise_white_desc">Jasny i równy, jak wentylator</string>
+    <string name="noise_pink_desc">Łagodniejszy, jak deszcz</string>
+    <string name="noise_brown_desc">Głęboki, jak wodospad</string>
+    <string name="section_sound">Dźwięk</string>
+    <string name="section_time">Czas</string>
+    <string name="section_volume">Głośność</string>
+    <string name="chip_minutes">%d min</string>
+    <string name="chip_custom">Inny</string>
+    <string name="countdown_label">Pozostały czas</string>
+    <string name="custom_time_title">Własny czas</string>
+    <string name="custom_time_hours">Godziny</string>
+    <string name="custom_time_minutes">Minuty</string>
+    <string name="custom_time_error_too_short">Minimalnie 1 minuta</string>
+    <string name="custom_time_error_too_long">Maksymalnie 8 godzin</string>
+    <string name="custom_time_error_minutes">Minuty: od 0 do 59</string>
+    <string name="custom_time_error_number">Wpisz same cyfry</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Anuluj</string>
+    <string name="plays_for">Gra przez %1$s</string>
+    <string name="duration_hours_minutes">%1$s %2$s</string>
+    <plurals name="duration_hours">
+        <item quantity="one">%d godzina</item>
+        <item quantity="few">%d godziny</item>
+        <item quantity="many">%d godzin</item>
+        <item quantity="other">%d godziny</item>
+    </plurals>
+    <plurals name="duration_hours_acc">
+        <item quantity="one">%d godzinę</item>
+        <item quantity="few">%d godziny</item>
+        <item quantity="many">%d godzin</item>
+        <item quantity="other">%d godziny</item>
+    </plurals>
+    <plurals name="duration_minutes">
+        <item quantity="one">%d minuta</item>
+        <item quantity="few">%d minuty</item>
+        <item quantity="many">%d minut</item>
+        <item quantity="other">%d minuty</item>
+    </plurals>
+    <plurals name="duration_minutes_acc">
+        <item quantity="one">%d minutę</item>
+        <item quantity="few">%d minuty</item>
+        <item quantity="many">%d minut</item>
+        <item quantity="other">%d minuty</item>
+    </plurals>
 </resources>
