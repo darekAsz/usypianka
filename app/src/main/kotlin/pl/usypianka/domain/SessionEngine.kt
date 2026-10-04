@@ -37,12 +37,14 @@ class SessionEngine(
     private var sliderPos = VolumeMap.DEFAULT
     private var ticker: Job? = null
     private var stopping = false
+    private var pendingSilent: (() -> Unit)? = null
 
     fun start(noise: Noise, durationMs: Long, volume: Float, assetPath: String = noise.assetPath) {
         if (timeline != null) {
             if (!stopping) return                     // WR-06: already running, a duplicate Start must not cut the audio
             ticker?.cancel(); output.setVolume(0f); output.stopAndRelease()   // restart during a stop ramp
         }
+        pendingSilent = null                          // a new session cancels a pending service stop (D-19)
         val t0 = now()
         stopping = false
         sliderPos = volume
@@ -70,6 +72,17 @@ class SessionEngine(
         stopping = true
         state.value = SessionState.Idle
         launchTicker()                                // wake the 500 ms body tick so the ramp starts at once, without a step
+    }
+
+    /**
+     * Ends the session with the normal Stop ramp (D-13) and calls [onSilent] once, after the output has been released
+     * (D-19: swipe from recents). Calls it at once when nothing is playing. A later call replaces a pending one; a new
+     * [start] or [release] drops it.
+     */
+    fun stopAndThen(onSilent: () -> Unit) {
+        if (timeline == null) { onSilent(); return }
+        pendingSilent = onSilent
+        stop()                                        // a no-op when a Stop ramp already runs
     }
 
     fun setVolume(volume: Float) {                    // immediate (D-07)
@@ -101,6 +114,7 @@ class SessionEngine(
         ticker?.cancel()
         timeline = null
         stopping = false
+        pendingSilent = null
         state.value = SessionState.Idle
     }
 
@@ -110,5 +124,8 @@ class SessionEngine(
         output.setVolume(0f)
         output.stopAndRelease()
         state.value = SessionState.Idle
+        val callback = pendingSilent
+        pendingSilent = null                          // cleared before invoking, so a re-entrant call cannot fire twice
+        callback?.invoke()
     }
 }
