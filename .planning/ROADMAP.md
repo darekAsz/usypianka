@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Podczas odtwarzania aplikacja pokazuje odliczanie pozostałego czasu; po zablokowaniu ekranu dźwięk gra dalej, a po upływie czasu wycisza się przez kilka sekund do ciszy i odtwarzanie kończy się samo, bez nagłego urwania
   4. Cała aplikacja ma ciemny interfejs bez białego błysku przy starcie i wyświetla się po polsku lub angielsku zgodnie z językiem telefonu, z poprawną odmianą liczebników („1 minuta / 2 minuty / 5 minut”)
 
-**Plans**: 6/7 plans executed (5 waves)
+**Plans**: 7/7 plans executed (5 waves)
 
 Plans:
 **Wave 1**
@@ -51,7 +51,7 @@ Plans:
 - [x] 01-06-PLAN.md — Player screen: tiles, chips, slider, countdown, +5 min, custom-time dialog with Polish plurals (wave 4)
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 01-07-PLAN.md — Tile preview, dark v31 splash, per-app language, icons, R8 release smoke (wave 5)
+- [x] 01-07-PLAN.md — Tile preview, dark v31 splash, per-app language, icons, R8 release smoke (wave 5)
 
 **UI hint**: yes
 **Research flag**: spike pętli bez przerw na prawdziwych urządzeniach (Media3 ExoPlayer REPEAT_MODE_ONE z FLAC/WAV vs AudioTrack jako wyjście awaryjne) przed utrwaleniem UI; wczesny test przy wygaszonym ekranie
@@ -154,7 +154,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Odtwarzanie z timerem | 6/7 | In Progress|  |
+| 1. Odtwarzanie z timerem | 7/7 | In Progress|  |
 | 2. Poziom dB i tryby wyciszania | 0/TBD | Not started | - |
 | 3. Noc bez przerw i test w Google Play | 0/TBD | Not started | - |
 | 4. Miernik dB i kalibracja mikrofonem | 0/TBD | Not started | - |
