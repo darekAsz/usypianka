@@ -1,6 +1,8 @@
 package pl.usypianka.playback
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Bundle
 import android.os.Process
 import android.os.SystemClock
@@ -28,6 +30,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import java.io.ByteArrayOutputStream
 import pl.usypianka.R
 import pl.usypianka.UsypiankaApp
 import pl.usypianka.domain.AudioOutput
@@ -56,6 +59,9 @@ class PlaybackService : MediaSessionService() {
     private var engine: SessionEngine? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
+    /** Moon artwork for the media notification and the lock screen (G-01-2); rendered once, main thread only. */
+    private val artwork: ByteArray? by lazy(LazyThreadSafetyMode.NONE) { renderArtwork() }
+
     override fun onCreate() {
         super.onCreate()
         val exo = ExoPlayer.Builder(this, AudioDiagnostics.renderersFactory(this))
@@ -77,7 +83,7 @@ class PlaybackService : MediaSessionService() {
         val sessionState = (application as UsypiankaApp).container.sessionState
         sessionState.value = SessionState.Idle
         val sessionEngine = SessionEngine(
-            ExoAudioOutput(exo, ::titleFor),
+            ExoAudioOutput(exo, ::titleFor) { artwork },
             scope,
             sessionState,
             SystemClock::elapsedRealtime,
@@ -144,6 +150,29 @@ class PlaybackService : MediaSessionService() {
         engine = null
         super.onDestroy()
     }
+
+    /**
+     * G-01-2: MIUI 12 / Android 11 renders MediaStyle notifications from the session metadata (artwork + app name) and
+     * keeps the small icon for the status bar, so the metadata needs a picture. A fixed 512 px PNG of the launcher
+     * vector on its dark disc colour (tens of KB, far below the Binder limit). Any failure yields null: playback must
+     * never depend on the artwork.
+     */
+    private fun renderArtwork(): ByteArray? = runCatching {
+        val drawable = checkNotNull(getDrawable(R.drawable.ic_launcher))
+        val bitmap = Bitmap.createBitmap(ARTWORK_SIZE_PX, ARTWORK_SIZE_PX, Bitmap.Config.ARGB_8888)
+        try {
+            val canvas = Canvas(bitmap)
+            canvas.drawColor(ARTWORK_BACKGROUND)
+            drawable.setBounds(0, 0, ARTWORK_SIZE_PX, ARTWORK_SIZE_PX)
+            drawable.draw(canvas)
+            ByteArrayOutputStream().use { out ->
+                check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, out))
+                out.toByteArray()
+            }
+        } finally {
+            bitmap.recycle()
+        }
+    }.getOrNull()
 
     private fun titleFor(assetPath: String): String = when (Noise.entries.firstOrNull { it.assetPath == assetPath }) {
         Noise.WHITE -> getString(R.string.noise_white_name)
@@ -237,6 +266,8 @@ class PlaybackService : MediaSessionService() {
 
     private companion object {
         const val TAG = "PlaybackService"
+        const val ARTWORK_SIZE_PX = 512
+        const val ARTWORK_BACKGROUND = 0xFF141418.toInt()     // the disc colour of ic_launcher
     }
 }
 
@@ -273,12 +304,18 @@ private class LockedPlayer(player: Player) : ForwardingPlayer(player) {
 internal class ExoAudioOutput(
     private val player: ExoPlayer,
     private val titleFor: (String) -> String,
+    private val artworkFor: () -> ByteArray?,
 ) : AudioOutput {
 
     override fun startLoop(assetPath: String) {
         val item = MediaItem.Builder()
             .setUri("asset:///$assetPath")
-            .setMediaMetadata(MediaMetadata.Builder().setTitle(titleFor(assetPath)).build())
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(titleFor(assetPath))
+                    .setArtworkData(artworkFor(), MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+                    .build(),
+            )
             .build()
         player.setMediaItem(item)
         player.repeatMode = Player.REPEAT_MODE_ONE
