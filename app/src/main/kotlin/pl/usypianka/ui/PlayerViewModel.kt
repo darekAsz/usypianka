@@ -47,7 +47,7 @@ class PlayerViewModel(
      */
     fun onNoiseSelected(noise: Noise) {
         val s = _state.value
-        if (!s.previewAvailable) return
+        if (!s.previewAvailable(now())) return
         if (previewHolder.isInitialized() && preview.playingNoise.value == noise) {
             preview.stop()
             return

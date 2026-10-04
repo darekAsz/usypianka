@@ -69,8 +69,11 @@ data class PlayerUiState(
     val selectionEnabled: Boolean get() = !isRunning
     val extendVisible: Boolean get() = isRunning
 
-    /** The 3-s tile preview is only for idle (D-05). */
-    val previewAvailable: Boolean get() = !isRunning
+    /**
+     * The 3-s tile preview is only for a really idle player (D-05): not while a Start is in flight and not during the
+     * Stop cooldown, when the service is still ramping down (WR-02). The same condition as [startEnabled].
+     */
+    fun previewAvailable(nowMs: Long): Boolean = startEnabled(nowMs)
 
     fun startEnabled(nowMs: Long): Boolean = !isRunning && !startPending(nowMs) && nowMs >= startCooldownUntilMs
 

@@ -151,7 +151,7 @@ class PlayerUiStateTest {
         assertEquals(Noise.BROWN, s.playingNoise)
         assertFalse(s.selectionEnabled)
         assertTrue(s.extendVisible)
-        assertFalse(s.previewAvailable)
+        assertFalse(s.previewAvailable(0L))
         assertFalse(s.startEnabled(0L))
     }
 
@@ -162,8 +162,21 @@ class PlayerUiStateTest {
         assertNull(s.playingNoise)
         assertTrue(s.selectionEnabled)
         assertFalse(s.extendVisible)
-        assertTrue(s.previewAvailable)
+        assertTrue(s.previewAvailable(0L))
         assertTrue(s.startEnabled(0L))
+    }
+
+    @Test
+    fun previewIsUnavailableWhileAStartIsInFlightOrDuringTheStopCooldown() {      // WR-02
+        val pending = PlayerUiState().onStartRequested(1_000L)
+        assertFalse(pending.previewAvailable(1_000L))
+        assertFalse(pending.previewAvailable(1_000L + START_PENDING_MS - 1))
+        assertTrue(pending.previewAvailable(1_000L + START_PENDING_MS))           // lapses if the service never answers
+
+        val stopped = running().onStopRequested(10_000L).withSession(SessionState.Idle, 10_000L)
+        assertFalse(stopped.previewAvailable(10_000L))
+        assertFalse(stopped.previewAvailable(12_499L))
+        assertTrue(stopped.previewAvailable(12_500L))
     }
 
     @Test
@@ -214,7 +227,7 @@ class PlayerUiStateTest {
         assertEquals(Noise.WHITE, s.selectedNoise)
         assertEquals(DurationChoice.Preset(TimePreset.M30), s.duration)
         assertTrue(s.selectionEnabled)
-        assertTrue(s.previewAvailable)
+        assertTrue(s.previewAvailable(0L))
     }
 
     // --- engine-initiated stops share the cooldown (WR-04) ---
