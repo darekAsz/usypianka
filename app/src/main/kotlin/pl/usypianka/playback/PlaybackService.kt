@@ -41,6 +41,7 @@ object PlaybackCommands {
     const val KEY_DURATION_MS = "duration_ms"
     const val KEY_VOLUME = "volume"
     const val KEY_ADD_MS = "add_ms"
+    const val KEY_DEBUG_ASSET = "debug_asset"                 // honoured only in debug builds (AudioDiagnostics)
     const val MAX_EXTEND_MS = 300_000L
 }
 
@@ -53,7 +54,7 @@ class PlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
-        val exo = ExoPlayer.Builder(this)
+        val exo = ExoPlayer.Builder(this, AudioDiagnostics.renderersFactory(this))
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
@@ -65,6 +66,7 @@ class PlaybackService : MediaSessionService() {
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
             .apply { repeatMode = Player.REPEAT_MODE_ONE }
+        AudioDiagnostics.attach(exo)
 
         val sessionEngine = SessionEngine(
             ExoAudioOutput(exo, ::titleFor),
@@ -165,7 +167,9 @@ class PlaybackService : MediaSessionService() {
                     if (noise == null || durationMs !in DurationSpec.MIN_MS..DurationSpec.MAX_MS || !volume.isFinite()) {
                         SessionResult(SessionError.ERROR_BAD_VALUE)
                     } else {
-                        target.start(noise, durationMs, volume.coerceIn(0f, 1f))
+                        val assetPath = AudioDiagnostics.resolveDebugAsset(args.getString(PlaybackCommands.KEY_DEBUG_ASSET))
+                            ?: noise.assetPath
+                        target.start(noise, durationMs, volume.coerceIn(0f, 1f), assetPath)
                         SessionResult(SessionResult.RESULT_SUCCESS)
                     }
                 }
