@@ -49,7 +49,7 @@ class SessionTimeline(
         }
     }
 
-    fun beginStop(now: Long, rampMs: Long = 1_500) {      // D-13: from the *current* offset
+    fun beginStop(now: Long, rampMs: Long = 2_500) {      // D-13: from the *current* offset
         if (stopping) return
         stopFromDb = offsetDb(now); stopStartMs = now; stopDurMs = rampMs.coerceAtLeast(1L); stopping = true
     }

@@ -114,17 +114,17 @@ class SessionEngineTest {
         r.engine.stop()
         assertEquals(SessionState.Idle, r.state.value)
 
-        advanceTo(60_750)
-        assertEquals(body - 30.0, db(r.out.lastVolume()), tolDb)
+        advanceTo(61_250)
+        assertEquals(body - 30.0, db(r.out.lastVolume()), tolDb)   // halfway through the 2.5 s ramp
 
-        advanceTo(61_520)
+        advanceTo(62_520)
         val stopped = r.out.stoppedAt
         assertNotNull(stopped)
-        assertTrue("stopped at $stopped", abs(stopped!! - 61_500L) <= 20L)
+        assertTrue("stopped at $stopped", abs(stopped!! - 62_500L) <= 20L)
 
-        val ramp = r.out.volumes.filter { it.first in 60_000..61_500 && it.second > 0f }.map { db(it.second) }
+        val ramp = r.out.volumes.filter { it.first in 60_000..62_500 && it.second > 0f }.map { db(it.second) }
         ramp.zipWithNext().forEach { (a, b) ->
-            assertTrue("step ${abs(b - a)} dB inside the stop ramp", abs(b - a) <= 0.9)
+            assertTrue("step ${abs(b - a)} dB inside the stop ramp", abs(b - a) <= 0.6)
         }
     }
 

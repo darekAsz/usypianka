@@ -31,7 +31,7 @@ class SessionEngine(
     private val now: () -> Long,
     private val fadeInMs: Long = 5_000,
     private val fadeOutMs: Long = 10_000,
-    private val stopRampMs: Long = 1_500,
+    private val stopRampMs: Long = 2_500,                 // user feedback on device (plan 01-04): 1.5 s felt too abrupt
 ) {
     private var timeline: SessionTimeline? = null
     private var sliderPos = VolumeMap.DEFAULT
