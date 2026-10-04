@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Podczas odtwarzania aplikacja pokazuje odliczanie pozostałego czasu; po zablokowaniu ekranu dźwięk gra dalej, a po upływie czasu wycisza się przez kilka sekund do ciszy i odtwarzanie kończy się samo, bez nagłego urwania
   4. Cała aplikacja ma ciemny interfejs bez białego błysku przy starcie i wyświetla się po polsku lub angielsku zgodnie z językiem telefonu, z poprawną odmianą liczebników („1 minuta / 2 minuty / 5 minut”)
 
-**Plans**: 7/7 plans executed (5 waves)
+**Plans**: 10 plans (7/7 executed in 5 waves + 3 UAT gap-closure plans)
 
 Plans:
 **Wave 1**
@@ -52,6 +52,13 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [x] 01-07-PLAN.md — Tile preview, dark v31 splash, per-app language, icons, R8 release smoke (wave 5)
+
+**Wave 6** *(UAT gap closure)*
+- [ ] 01-08-PLAN.md — Final fade and Stop ramp end at an absolute audibility floor (G-01-2b); preview at slider level (G-01-7); UAT decision changes recorded in CONTEXT (wave 6)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+- [ ] 01-09-PLAN.md — Swipe from recents ends the session via onTaskRemoved + stopAndThen (G-01-2d, D-19); moon artwork in the media notification (G-01-2) (wave 7)
+- [ ] 01-10-PLAN.md — "+1 min" button next to "+5 min" (G-01-2c); preview follows the slider (G-01-7) (wave 7)
 
 **UI hint**: yes
 **Research flag**: spike pętli bez przerw na prawdziwych urządzeniach (Media3 ExoPlayer REPEAT_MODE_ONE z FLAC/WAV vs AudioTrack jako wyjście awaryjne) przed utrwaleniem UI; wczesny test przy wygaszonym ekranie
