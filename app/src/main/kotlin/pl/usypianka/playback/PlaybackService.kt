@@ -1,6 +1,7 @@
 package pl.usypianka.playback
 
 import android.os.Bundle
+import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.OptIn
@@ -17,6 +18,7 @@ import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.Futures
@@ -138,12 +140,18 @@ class PlaybackService : MediaSessionService() {
 
     private inner class SessionCallback : MediaSession.Callback {
 
+        /** uid, not package name: the uid is assigned by the system and cannot be claimed by another app. */
+        private fun isOwnApp(controller: MediaSession.ControllerInfo): Boolean =
+            controller.uid == Process.myUid()
+
         override fun onConnectAsync(
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
         ): ListenableFuture<MediaSession.ConnectionResult> {
             val builder = MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
-            if (controller.packageName == packageName) {
+            if (isOwnApp(controller)) {
+                // Our own controller (the Activity, and Media3's notification controller) drives the session only
+                // through the custom commands; its player commands are whatever LockedPlayer allows (read-only).
                 builder.setAvailableSessionCommands(
                     MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
                         .add(SessionCommand(PlaybackCommands.ACTION_START, Bundle.EMPTY))
@@ -152,6 +160,11 @@ class PlaybackService : MediaSessionService() {
                         .add(SessionCommand(PlaybackCommands.ACTION_VOLUME, Bundle.EMPTY))
                         .build(),
                 )
+            } else {
+                // CR-01: every other app (and system UI, Bluetooth, Assistant) may observe the session and nothing else.
+                builder
+                    .setAvailableSessionCommands(SessionCommands.EMPTY)
+                    .setAvailablePlayerCommands(LOCKED_PLAYER_COMMANDS)
             }
             return Futures.immediateFuture(builder.build())
         }
@@ -162,7 +175,7 @@ class PlaybackService : MediaSessionService() {
             customCommand: SessionCommand,
             args: Bundle,
         ): ListenableFuture<SessionResult> {
-            if (controller.packageName != packageName) {
+            if (!isOwnApp(controller)) {
                 return Futures.immediateFuture(SessionResult(SessionError.ERROR_PERMISSION_DENIED))
             }
             val target = engine ?: return Futures.immediateFuture(SessionResult(SessionError.ERROR_BAD_VALUE))
@@ -213,26 +226,33 @@ class PlaybackService : MediaSessionService() {
     }
 }
 
-/** D-14: no pause, stop, seek or volume from the notification, Bluetooth buttons or Assistant. */
+/**
+ * The only player commands any controller may use: read-only getters, so the notification and lock screen can render
+ * the title and state. Everything that could change playback (play/pause, stop, seek, volume, speed, media items,
+ * prepare, release) is absent (D-14, CR-01). The session itself is driven only through its custom commands.
+ */
+private val LOCKED_PLAYER_COMMANDS: Player.Commands = lockedPlayerCommands()
+
+@OptIn(UnstableApi::class)
+private fun lockedPlayerCommands(): Player.Commands = Player.Commands.Builder()
+    .addAll(
+        Player.COMMAND_GET_CURRENT_MEDIA_ITEM,
+        Player.COMMAND_GET_METADATA,
+        Player.COMMAND_GET_TIMELINE,
+        Player.COMMAND_GET_AUDIO_ATTRIBUTES,
+        Player.COMMAND_GET_VOLUME,
+        Player.COMMAND_GET_DEVICE_VOLUME,
+        Player.COMMAND_GET_TEXT,
+        Player.COMMAND_GET_TRACKS,
+    )
+    .build()
+
+/** D-14: an allowlist, so a command added by a future Media3 release is denied by default. */
 @OptIn(UnstableApi::class)
 private class LockedPlayer(player: Player) : ForwardingPlayer(player) {
-    override fun getAvailableCommands(): Player.Commands =
-        super.getAvailableCommands().buildUpon()
-            .removeAll(
-                Player.COMMAND_PLAY_PAUSE,
-                Player.COMMAND_STOP,
-                Player.COMMAND_SET_VOLUME,
-                Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS,
-                Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS,
-                Player.COMMAND_SEEK_TO_DEFAULT_POSITION,
-                Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM,
-                Player.COMMAND_SEEK_TO_NEXT,
-                Player.COMMAND_SEEK_TO_PREVIOUS,
-                Player.COMMAND_SET_REPEAT_MODE,
-            )
-            .build()
+    override fun getAvailableCommands(): Player.Commands = LOCKED_PLAYER_COMMANDS
 
-    override fun isCommandAvailable(command: Int): Boolean = availableCommands.contains(command)
+    override fun isCommandAvailable(command: Int): Boolean = LOCKED_PLAYER_COMMANDS.contains(command)
 }
 
 /** Swap point for an AudioTrack output if the loop spike fails. Never seeks to 0 on STATE_ENDED. */
