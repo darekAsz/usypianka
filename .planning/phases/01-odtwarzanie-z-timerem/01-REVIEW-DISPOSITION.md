@@ -10,13 +10,13 @@ One row per finding in 01-REVIEW.md. Default disposition is `open` until triaged
 
 | ID | Severity | Title | Disposition | Note |
 |----|----------|-------|-------------|------|
-| CR-01 | critical | D-14 locked player is a denylist on an exported session | open | |
-| WR-01 | warning | Service destruction leaves sessionState stuck at Running | open | |
-| WR-02 | warning | start() publishes Running after startLoop; sync focus denial swallowed | open | |
-| WR-03 | warning | Failed MediaController connection drops later commands incl. Stop | open | |
-| WR-04 | warning | Engine-initiated stops bypass Start cooldown; restart hard-cuts audio | open | |
-| WR-05 | warning | Volume changes before Running arrives are lost | open | |
-| WR-06 | warning | Double tap on Start restarts session mid-fade | open | |
+| CR-01 | critical | D-14 locked player is a denylist on an exported session | fixed | c7f4d49 — allowlist + uid check; needs on-device check (UAT) |
+| WR-01 | warning | Service destruction leaves sessionState stuck at Running | fixed | f4ca98f, 0186906 |
+| WR-02 | warning | start() publishes Running after startLoop; sync focus denial swallowed | fixed | 0186906 |
+| WR-03 | warning | Failed MediaController connection drops later commands incl. Stop | fixed | 58d9e92 — reconnect once; failures logged only |
+| WR-04 | warning | Engine-initiated stops bypass Start cooldown; restart hard-cuts audio | fixed | a1e9ebd — cooldown derived in PlayerUiState |
+| WR-05 | warning | Volume changes before Running arrives are lost | fixed | a1e9ebd |
+| WR-06 | warning | Double tap on Start restarts session mid-fade | fixed | 0186906, a1e9ebd |
 | IN-01 | info | Transient audio-focus loss ends whole session | open | Phase-1 user decision; PLAY-07 (Phase 3) |
 | IN-02 | info | Comment/constant duplication | open | |
 | IN-03 | info | Launcher icon is a 108 dp vector used as plain icon | open | |
