@@ -59,14 +59,14 @@ class SessionEngine(
     fun extend(addMs: Long) {
         val tl = timeline ?: return
         val running = state.value as? SessionState.Running ?: return
-        tl.extend(now(), addMs)
+        tl.extend(now(), addMs, VolumeMap.sliderToDb(sliderPos))
         state.value = running.copy(endAtMs = tl.endMs)
     }
 
     fun stop() {                                      // UI returns to Idle at once (D-13); audio ramps down in the background
         val tl = timeline ?: return
         if (state.value is SessionState.Idle) return
-        tl.beginStop(now(), stopRampMs)
+        tl.beginStop(now(), VolumeMap.sliderToDb(sliderPos), stopRampMs)
         stopping = true
         state.value = SessionState.Idle
         launchTicker()                                // wake the 500 ms body tick so the ramp starts at once, without a step
@@ -77,8 +77,10 @@ class SessionEngine(
         timeline?.let { apply(it, now()) }
     }
 
-    private fun apply(tl: SessionTimeline, t: Long) =
-        output.setVolume(Gain.amplitude(VolumeMap.sliderToDb(sliderPos) + tl.offsetDb(t)))
+    private fun apply(tl: SessionTimeline, t: Long) {
+        val base = VolumeMap.sliderToDb(sliderPos)
+        output.setVolume(Gain.amplitude(base + tl.offsetDb(t, base)))
+    }
 
     private fun launchTicker() {
         ticker?.cancel()
@@ -88,7 +90,7 @@ class SessionEngine(
                 val t = now()
                 if (tl.isFinished(t)) { finish(); break }
                 apply(tl, t)
-                val inFade = stopping || tl.offsetDb(t) < -0.001 || tl.remainingMs(t) <= fadeOutMs + 1_000
+                val inFade = stopping || tl.offsetDb(t, VolumeMap.sliderToDb(sliderPos)) < -0.001 || tl.remainingMs(t) <= fadeOutMs + 1_000
                 delay(if (inFade) 20L else 500L)
             }
         }
