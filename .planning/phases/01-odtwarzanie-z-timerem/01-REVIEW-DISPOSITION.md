@@ -5,11 +5,11 @@ titles: json
 findings:
   - id: WR-01
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "A volume change during the Stop ramp breaks the fade-floor invariant and can end with an audible cut"
   - id: WR-02
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Tile preview is not gated on the Start-in-flight window or the Stop cooldown, so it overlaps the session audio"
   - id: IN-01
     severity: info
@@ -47,17 +47,17 @@ findings:
     severity: warning
     disposition: fixed
     title: "Double tap on Start restarts the session mid-fade"
-open: 6
+open: 4
 total: 11
-recorded: 2026-10-04T13:32:54.944Z
+recorded: 2026-10-04T13:48:18.776Z
 ---
 
 # Phase 01: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | open | - |
-| WR-02 | warning | open | - |
+| WR-01 | warning | fixed | 01-REVIEW-FIX.md |
+| WR-02 | warning | fixed | 01-REVIEW-FIX.md |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
