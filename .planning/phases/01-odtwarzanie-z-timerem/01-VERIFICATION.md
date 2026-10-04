@@ -12,7 +12,21 @@ covered_files:
   - app/src/main/kotlin/pl/usypianka/ui/PlayerScreen.kt
   - app/src/main/kotlin/pl/usypianka/ui/PlayerUiState.kt
   - app/src/main/kotlin/pl/usypianka/ui/PlayerViewModel.kt
-covered_digest: "v2:sha256:1a5e1747a5d7b77c7e5af18af8702a9b8ca8eef0bade8ea03b576de587d61584"
+  - .planning/phases/01-odtwarzanie-z-timerem/01-01-PLAN.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-01-SUMMARY.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-02-PLAN.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-02-SUMMARY.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-03-PLAN.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-03-SUMMARY.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-04-PLAN.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-04-SUMMARY.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-05-PLAN.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-05-SUMMARY.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-06-PLAN.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-06-SUMMARY.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-07-PLAN.md
+  - .planning/phases/01-odtwarzanie-z-timerem/01-07-SUMMARY.md
+covered_digest: "v2:sha256:af346de00a707f16b58d46e09e95942a31f942fccaff25faf9d70ca41e14553a"
 behavior_unverified: 0
 overrides_applied: 0
 re_verification: null
