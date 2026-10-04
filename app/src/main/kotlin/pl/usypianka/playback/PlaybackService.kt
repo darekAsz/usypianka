@@ -1,5 +1,6 @@
 package pl.usypianka.playback
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Process
 import android.os.SystemClock
@@ -117,7 +118,20 @@ class PlaybackService : MediaSessionService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
 
-    // No task-removal override: the Media3 default keeps playing while playing and stops otherwise.
+    /**
+     * User decision D-19 (UAT G-01-2d): swiping the app away from recents ends the session. The sound ramps down like
+     * a manual Stop first (no click), then [pauseAllPlayersAndStopSelf] stops the service and removes the
+     * notification. The shared state is Idle at once, so reopening the app shows the pre-start screen. The Media3
+     * default (keep a playing service alive) is deliberately not called. Runs on the main thread, like the engine.
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val current = engine
+        if (current == null) {
+            pauseAllPlayersAndStopSelf()
+        } else {
+            current.stopAndThen { pauseAllPlayersAndStopSelf() }
+        }
+    }
 
     override fun onDestroy() {
         scope.cancel()
