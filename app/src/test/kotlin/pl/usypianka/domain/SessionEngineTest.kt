@@ -281,6 +281,109 @@ class SessionEngineTest {
     }
 
     @Test
+    fun stopAndThenWhenIdleCallsBackAtOnce() = runTest {                          // D-19, G-01-2d
+        val r = Rig(this)
+        var calls = 0
+        r.engine.stopAndThen { calls++ }
+        assertEquals(1, calls)
+
+        r.engine.start(Noise.PINK, 60_000, slider)
+        advanceTo(60_000)                                 // the session ended by itself
+        r.engine.stopAndThen { calls++ }
+        assertEquals(2, calls)
+    }
+
+    @Test
+    fun stopAndThenRampsDownReleasesTheOutputThenCallsBackOnce() = runTest {
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, slider)
+        advanceTo(60_000)
+        var calls = 0
+        var stoppedWhenCalled: Long? = null
+        r.engine.stopAndThen { calls++; stoppedWhenCalled = r.out.stoppedAt }
+
+        assertEquals(SessionState.Idle, r.state.value)    // the UI is Idle at once
+        assertEquals(0, calls)
+        advanceTo(62_480)
+        assertEquals(0, calls)
+        assertNull(r.out.stoppedAt)
+
+        advanceTo(62_520)
+        assertEquals(1, calls)
+        assertNotNull(stoppedWhenCalled)                  // the callback saw an already released output
+        assertTrue("stopped at ${r.out.stoppedAt}", abs(r.out.stoppedAt!! - 62_500L) <= 20L)
+
+        advanceTo(120_000)
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun stopAndThenDuringAManualStopRampWaitsForThatRamp() = runTest {
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, slider)
+        advanceTo(60_000)
+        r.engine.stop()
+        advanceTo(61_000)
+        var calls = 0
+        r.engine.stopAndThen { calls++ }
+
+        advanceTo(62_480)
+        assertEquals(0, calls)                            // the ramp was not restarted from 61 000
+        advanceTo(62_520)
+        assertEquals(1, calls)
+        assertTrue("stopped at ${r.out.stoppedAt}", abs(r.out.stoppedAt!! - 62_500L) <= 20L)
+    }
+
+    @Test
+    fun aStartAfterStopAndThenCancelsTheCallback() = runTest {
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, slider)
+        advanceTo(60_000)
+        var calls = 0
+        r.engine.stopAndThen { calls++ }
+        advanceTo(61_000)
+
+        r.engine.start(Noise.BROWN, 600_000, slider)
+        advanceTo(70_000)
+
+        assertEquals(0, calls)
+        assertEquals(SessionState.Running(Noise.BROWN, 661_000), r.state.value)
+        assertEquals(2, r.out.loops.size)
+    }
+
+    @Test
+    fun releaseDropsAPendingStopAndThenCallback() = runTest {
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, slider)
+        advanceTo(60_000)
+        var calls = 0
+        r.engine.stopAndThen { calls++ }
+
+        r.engine.release()
+        advanceTo(120_000)
+
+        assertEquals(0, calls)
+    }
+
+    @Test
+    fun stopAndThenNearTheEndCallsBackWhenTheSessionEnds() = runTest {
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, slider)
+        advanceTo(898_500)                                // 1.5 s left, inside the final fade
+        var calls = 0
+        r.engine.stopAndThen { calls++ }
+        advanceTo(899_900)
+        assertEquals(0, calls)
+
+        advanceTo(900_020)
+        assertEquals(1, calls)
+        assertNotNull(r.out.stoppedAt)
+
+        advanceTo(960_000)
+        assertEquals(1, calls)
+    }
+
+    @Test
     fun releaseResetsTheSharedStateAndCancelsTheTicker() = runTest {              // WR-01
         val r = Rig(this)
         r.engine.start(Noise.PINK, 900_000, slider)
