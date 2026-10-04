@@ -76,11 +76,16 @@ class PlayerViewModel(
         return result
     }
 
-    /** Immediate, also while running: the engine keeps the fade as an offset on top of the slider level (D-07). */
+    /**
+     * Immediate, also while running: the engine keeps the fade as an offset on top of the slider level (D-07).
+     * A running tile preview follows the slider too (D-05 as changed in UAT G-01-7).
+     */
     fun onVolumeChanged(position: Float) {
         _state.update { it.withVolume(position) }
         val s = _state.value
         if (s.shouldSendVolume(now())) container.playbackClient.setVolume(s.volume)
+        // Never create the second ExoPlayer just for a slider move; PreviewPlayer ignores this when nothing previews.
+        if (previewHolder.isInitialized()) preview.setSliderPosition(s.volume)
     }
 
     fun onStartClicked() {
