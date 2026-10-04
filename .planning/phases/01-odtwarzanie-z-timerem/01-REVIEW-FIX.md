@@ -24,14 +24,14 @@ status: all_fixed
 
 ## Fixed Issues
 
-### WR-01: A volume change during the Stop ramp breaks the fade-floor invariant
+### WR-01: A volume change during the Stop ramp breaks the fade-floor invariant and can end with an audible cut
 
 **Files modified:** `app/src/main/kotlin/pl/usypianka/domain/SessionEngine.kt`, `app/src/test/kotlin/pl/usypianka/domain/SessionEngineTest.kt`
 **Commit:** 860f280
 **Applied fix:** `SessionEngine.setVolume` returns early while `stopping`, so the Stop ramp keeps the slider level it was planned for and ends at `FADE_FLOOR_DB`. Added the test `aVolumeChangeDuringTheStopRampIsIgnoredAndTheRampStillEndsAtTheFloor`. It starts at the default slider, stops, calls `setVolume(1f)` halfway, and asserts that no new output level is emitted. It also asserts that the last non-zero level is about `FADE_FLOOR_DB` and that the ramp has no steps over 0.6 dB.
 **Status note:** fixed: requires human verification. This is a state-handling change. The fix is the reviewer's first option (ignore the change), not the absolute-levels alternative. As a result, a slider move made during the 2.5 s ramp is not applied to the ramp. After the ramp the session is over, so it does not matter.
 
-### WR-02: Tile preview is not gated on the Start-in-flight window or the Stop cooldown
+### WR-02: Tile preview is not gated on the Start-in-flight window or the Stop cooldown, so it overlaps the session audio
 
 **Files modified:** `app/src/main/kotlin/pl/usypianka/ui/PlayerUiState.kt`, `app/src/main/kotlin/pl/usypianka/ui/PlayerViewModel.kt`, `app/src/test/kotlin/pl/usypianka/ui/PlayerUiStateTest.kt`
 **Commit:** cd12f18
