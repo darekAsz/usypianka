@@ -100,7 +100,8 @@ class PlaybackService : MediaSessionService() {
         setMediaNotificationProvider(
             DefaultMediaNotificationProvider.Builder(this)
                 .setChannelName(R.string.notification_channel_name)
-                .build(),
+                .build()
+                .apply { setSmallIcon(R.drawable.ic_stat_sleep) },
         )
         session = MediaSession.Builder(this, LockedPlayer(exo))
             .setCallback(SessionCallback())

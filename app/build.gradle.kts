@@ -22,6 +22,7 @@ android {
     }
     androidResources {
         noCompress += listOf("flac", "wav")
+        generateLocaleConfig = true      // needs res/resources.properties (unqualifiedResLocale=en-US)
     }
 }
 
