@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Podczas odtwarzania aplikacja pokazuje odliczanie pozostałego czasu; po zablokowaniu ekranu dźwięk gra dalej, a po upływie czasu wycisza się przez kilka sekund do ciszy i odtwarzanie kończy się samo, bez nagłego urwania
   4. Cała aplikacja ma ciemny interfejs bez białego błysku przy starcie i wyświetla się po polsku lub angielsku zgodnie z językiem telefonu, z poprawną odmianą liczebników („1 minuta / 2 minuty / 5 minut”)
 
-**Plans**: 4/7 plans executed (5 waves)
+**Plans**: 5/7 plans executed (5 waves)
 
 Plans:
 **Wave 1**
@@ -44,7 +44,7 @@ Plans:
 - [x] 01-03-PLAN.md — TRACER: Start plays a clock-timed looped noise via PlaybackService; timing model tests (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 01-04-PLAN.md — Gapless spike on the user's one phone (LoopProbe), loop-format decision, volume tuning, 01-SPIKE.md (wave 3)
+- [x] 01-04-PLAN.md — Gapless spike on the user's one phone (LoopProbe), loop-format decision, volume tuning, 01-SPIKE.md (wave 3)
 - [x] 01-05-PLAN.md — PlayerUiState: chips, custom-time validation, locks, Stop cooldown (TDD) (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
@@ -154,7 +154,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Odtwarzanie z timerem | 4/7 | In Progress|  |
+| 1. Odtwarzanie z timerem | 5/7 | In Progress|  |
 | 2. Poziom dB i tryby wyciszania | 0/TBD | Not started | - |
 | 3. Noc bez przerw i test w Google Play | 0/TBD | Not started | - |
 | 4. Miernik dB i kalibracja mikrofonem | 0/TBD | Not started | - |
