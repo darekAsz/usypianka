@@ -2,6 +2,7 @@ package pl.usypianka.ui
 
 import pl.usypianka.domain.DurationSpec
 import pl.usypianka.domain.Noise
+import pl.usypianka.domain.STOP_RAMP_MS
 import pl.usypianka.domain.SessionState
 import pl.usypianka.domain.VolumeMap
 
@@ -25,8 +26,8 @@ sealed interface CustomDurationResult {
 
 data class DurationParts(val hours: Int, val minutes: Int)
 
-/** Start stays disabled this long after Stop so a new session never overlaps the quick-stop ramp (D-13). */
-const val STOP_COOLDOWN_MS = 1_500L
+/** Start stays disabled for the whole manual stop ramp ([STOP_RAMP_MS]) so a new session never overlaps it (D-13). */
+const val STOP_COOLDOWN_MS = STOP_RAMP_MS
 
 /** The "+5 min" extension step (D-17). */
 const val EXTEND_STEP_MS = 300_000L

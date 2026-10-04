@@ -6,6 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import pl.usypianka.domain.Noise
+import pl.usypianka.domain.STOP_RAMP_MS
 import pl.usypianka.domain.SessionState
 import pl.usypianka.domain.VolumeMap
 
@@ -219,6 +220,7 @@ class PlayerUiStateTest {
     fun constantsMatchTheDecisions() {
         assertEquals(300_000L, EXTEND_STEP_MS)
         assertEquals(2_500L, STOP_COOLDOWN_MS)
+        assertEquals(STOP_RAMP_MS, STOP_COOLDOWN_MS)
     }
 
     // --- splitDuration (plural formatting input) ---

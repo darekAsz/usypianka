@@ -4,6 +4,9 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.pow
 
+/** Length of the manual Stop ramp (D-13, 2.5 s after user feedback in plan 01-04); the UI Start cooldown reuses it. */
+const val STOP_RAMP_MS = 2_500L
+
 object Gain {
     const val MUTE_FLOOR_DB = -80.0                                    // D-07
     fun amplitude(db: Double): Float =
@@ -49,7 +52,7 @@ class SessionTimeline(
         }
     }
 
-    fun beginStop(now: Long, rampMs: Long = 2_500) {      // D-13: from the *current* offset
+    fun beginStop(now: Long, rampMs: Long = STOP_RAMP_MS) {      // D-13: from the *current* offset
         if (stopping) return
         stopFromDb = offsetDb(now); stopStartMs = now; stopDurMs = rampMs.coerceAtLeast(1L); stopping = true
     }
