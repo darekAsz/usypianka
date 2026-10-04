@@ -37,7 +37,7 @@ class PlayerViewModel(
 
     init {
         viewModelScope.launch {
-            container.sessionState.collect { s -> _state.update { it.withSession(s) } }
+            container.sessionState.collect { s -> _state.update { it.withSession(s, now()) } }
         }
     }
 
@@ -80,13 +80,14 @@ class PlayerViewModel(
     fun onVolumeChanged(position: Float) {
         _state.update { it.withVolume(position) }
         val s = _state.value
-        if (s.isRunning) container.playbackClient.setVolume(s.volume)
+        if (s.shouldSendVolume(now())) container.playbackClient.setVolume(s.volume)
     }
 
     fun onStartClicked() {
         val s = _state.value
         if (!s.startEnabled(now())) return
         stopPreview()   // the session's own fade-in starts from silence, so the 150 ms overlap is inaudible
+        _state.update { it.onStartRequested(now()) }
         container.playbackClient.start(s.selectedNoise, s.durationMs, s.volume)
     }
 

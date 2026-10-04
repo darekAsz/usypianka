@@ -141,7 +141,7 @@ class PlayerUiStateTest {
 
     // --- session binding: locks while playing (D-02, D-17, D-05) ---
 
-    private fun running() = PlayerUiState().withSession(SessionState.Running(Noise.BROWN, 1_000_000L))
+    private fun running() = PlayerUiState().withSession(SessionState.Running(Noise.BROWN, 1_000_000L), 0L)
 
     @Test
     fun runningSessionSetsTheDerivedFlags() {
@@ -200,7 +200,7 @@ class PlayerUiStateTest {
 
     @Test
     fun startStaysDisabledUntilTheStopRampEnds() {
-        val s = running().onStopRequested(10_000L).withSession(SessionState.Idle)
+        val s = running().onStopRequested(10_000L).withSession(SessionState.Idle, 10_000L)
         assertEquals(12_500L, s.startCooldownUntilMs)
         assertFalse(s.startEnabled(12_499L))
         assertTrue(s.startEnabled(12_500L))
@@ -209,11 +209,61 @@ class PlayerUiStateTest {
     @Test
     fun returningToIdleKeepsTheSelectionAndReenablesControls() {
         val picked = PlayerUiState().selectNoise(Noise.WHITE).selectPreset(TimePreset.M30)
-        val s = picked.withSession(SessionState.Running(Noise.WHITE, 1_000L)).withSession(SessionState.Idle)
+        val s = picked.withSession(SessionState.Running(Noise.WHITE, 1_000L), 0L).withSession(SessionState.Idle, 1_000L)
         assertEquals(Noise.WHITE, s.selectedNoise)
         assertEquals(DurationChoice.Preset(TimePreset.M30), s.duration)
         assertTrue(s.selectionEnabled)
         assertTrue(s.previewAvailable)
+    }
+
+    // --- engine-initiated stops share the cooldown (WR-04) ---
+
+    @Test
+    fun anInterruptionStopMidSessionArmsTheSameCooldown() {
+        val s = running().withSession(SessionState.Idle, 400_000L)       // focus loss / noisy / error, 600 s early
+        assertEquals(402_500L, s.startCooldownUntilMs)
+        assertFalse(s.startEnabled(402_499L))
+        assertTrue(s.startEnabled(402_500L))
+    }
+
+    @Test
+    fun aNaturalEndOfTheSessionDoesNotArmTheCooldown() {
+        val s = running().withSession(SessionState.Idle, 1_000_000L)     // fade already finished at the end instant
+        assertEquals(0L, s.startCooldownUntilMs)
+        assertTrue(s.startEnabled(1_000_000L))
+    }
+
+    @Test
+    fun aLaterEngineStopNeverShortensAnExistingCooldown() {
+        val s = running().onStopRequested(400_000L).withSession(SessionState.Idle, 400_100L)
+        assertEquals(402_600L, s.startCooldownUntilMs)
+    }
+
+    // --- Start in flight (WR-05, WR-06) ---
+
+    @Test
+    fun volumeIsForwardedWhileAStartIsInFlight() {
+        val s = PlayerUiState().onStartRequested(1_000L)
+        assertTrue(s.startPending(1_500L))
+        assertTrue(s.shouldSendVolume(1_500L))
+        assertFalse(s.startEnabled(1_500L))                 // a second tap cannot restart the session
+    }
+
+    @Test
+    fun theInFlightWindowEndsWhenRunningArrivesOrTimesOut() {
+        val s = PlayerUiState().onStartRequested(1_000L)
+        val running = s.withSession(SessionState.Running(Noise.PINK, 900_000L), 1_300L)
+        assertFalse(running.startPending(1_300L))
+        assertTrue(running.shouldSendVolume(1_300L))        // running forwards volume anyway
+
+        assertFalse(s.startPending(1_000L + START_PENDING_MS))     // service never answered, UI recovers
+        assertTrue(s.startEnabled(1_000L + START_PENDING_MS))
+        assertFalse(s.shouldSendVolume(1_000L + START_PENDING_MS))
+    }
+
+    @Test
+    fun idleWithoutAStartRequestForwardsNoVolume() {
+        assertFalse(PlayerUiState().shouldSendVolume(5_000L))
     }
 
     @Test

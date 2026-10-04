@@ -29,6 +29,12 @@ data class DurationParts(val hours: Int, val minutes: Int)
 /** Start stays disabled for the whole manual stop ramp ([STOP_RAMP_MS]) so a new session never overlaps it (D-13). */
 const val STOP_COOLDOWN_MS = STOP_RAMP_MS
 
+/**
+ * How long a Start counts as "in flight" while the service connection and IPC round trip are pending. Volume moves in this
+ * window are forwarded (WR-05) and a second Start is refused (WR-06); it lapses by itself if the service never answers.
+ */
+const val START_PENDING_MS = 1_500L
+
 /** The "+5 min" extension step (D-17). */
 const val EXTEND_STEP_MS = 300_000L
 
@@ -42,6 +48,7 @@ data class PlayerUiState(
     val volume: Float = VolumeMap.DEFAULT,
     val session: SessionState = SessionState.Idle,
     val startCooldownUntilMs: Long = 0L,
+    val startRequestedAtMs: Long? = null,
 ) {
     val durationMs: Long
         get() = when (val d = duration) {
@@ -59,7 +66,16 @@ data class PlayerUiState(
     /** The 3-s tile preview is only for idle (D-05). */
     val previewAvailable: Boolean get() = !isRunning
 
-    fun startEnabled(nowMs: Long): Boolean = !isRunning && nowMs >= startCooldownUntilMs
+    fun startEnabled(nowMs: Long): Boolean = !isRunning && !startPending(nowMs) && nowMs >= startCooldownUntilMs
+
+    /** A Start was sent but the service has not reported Running yet. */
+    fun startPending(nowMs: Long): Boolean {
+        val at = startRequestedAtMs ?: return false
+        return !isRunning && nowMs - at < START_PENDING_MS
+    }
+
+    /** The slider reaches the engine while running and while a Start is in flight, so no move is lost (WR-05). */
+    fun shouldSendVolume(nowMs: Long): Boolean = isRunning || startPending(nowMs)
 
     /** Source of the countdown (TIME-03): never negative, null when idle. */
     fun remainingMs(nowMs: Long): Long? =
@@ -72,7 +88,25 @@ fun PlayerUiState.selectNoise(noise: Noise): PlayerUiState =
 fun PlayerUiState.selectPreset(preset: TimePreset): PlayerUiState =
     if (isRunning) this else copy(duration = DurationChoice.Preset(preset))
 
-fun PlayerUiState.withSession(session: SessionState): PlayerUiState = copy(session = session)
+/**
+ * Applies a session update from the service. Leaving Running before the planned end (focus loss, headphones unplugged,
+ * player error, manual Stop) means the engine is ramping down, so Start gets the same cooldown as after a manual Stop
+ * (WR-04). A natural end needs none: the fade-out has already finished.
+ */
+fun PlayerUiState.withSession(session: SessionState, nowMs: Long): PlayerUiState {
+    val previous = this.session
+    val cooldown =
+        if (previous is SessionState.Running && session is SessionState.Idle && previous.endAtMs > nowMs) {
+            maxOf(startCooldownUntilMs, nowMs + STOP_COOLDOWN_MS)
+        } else {
+            startCooldownUntilMs
+        }
+    val requested = if (session is SessionState.Running) null else startRequestedAtMs
+    return copy(session = session, startCooldownUntilMs = cooldown, startRequestedAtMs = requested)
+}
+
+/** Call when Start is sent to the service; see [START_PENDING_MS]. */
+fun PlayerUiState.onStartRequested(nowMs: Long): PlayerUiState = copy(startRequestedAtMs = nowMs)
 
 /** Call when the parent presses Stop; keeps Start disabled for [STOP_COOLDOWN_MS]. */
 fun PlayerUiState.onStopRequested(nowMs: Long): PlayerUiState =
