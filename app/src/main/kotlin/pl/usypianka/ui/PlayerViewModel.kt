@@ -96,9 +96,9 @@ class PlayerViewModel(
         _state.update { it.onStopRequested(now()) }
     }
 
-    /** "+5 min" has no total cap (D-17); the 8 h limit only applies to the setting before Start. */
-    fun onExtendClicked() {
-        if (_state.value.isRunning) container.playbackClient.extend(EXTEND_STEP_MS)
+    /** "+1 min" / "+5 min" have no total cap (D-17); the 8 h limit only applies to the setting before Start. */
+    fun onExtendClicked(step: ExtendStep) {
+        if (_state.value.isRunning) container.playbackClient.extend(step.ms)
     }
 
     override fun onCleared() {

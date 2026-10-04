@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -142,7 +143,7 @@ private fun PlayerContent(
     onVolumeChanged: (Float) -> Unit,
     onStart: () -> Unit,
     onStop: () -> Unit,
-    onExtend: () -> Unit,
+    onExtend: (ExtendStep) -> Unit,
 ) {
     // Insets first, then scroll inside them: the layout scrolls in portrait and landscape (no orientation lock).
     Column(
@@ -197,11 +198,19 @@ private fun PlayerContent(
 
         if (state.isRunning) {
             RunningInfo(state = state, nowMs = nowMs)
-            OutlinedButton(
-                onClick = onExtend,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            ) {
-                Text(stringResource(R.string.action_extend), style = MaterialTheme.typography.titleMedium)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { onExtend(ExtendStep.ONE_MINUTE) },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                ) {
+                    Text(stringResource(R.string.action_extend_1), style = MaterialTheme.typography.titleMedium)
+                }
+                OutlinedButton(
+                    onClick = { onExtend(ExtendStep.FIVE_MINUTES) },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                ) {
+                    Text(stringResource(R.string.action_extend), style = MaterialTheme.typography.titleMedium)
+                }
             }
         }
 
