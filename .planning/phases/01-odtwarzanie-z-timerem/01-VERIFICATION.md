@@ -1,17 +1,9 @@
 ---
 phase: 01-odtwarzanie-z-timerem
-verified: 2026-10-04T12:00:00Z
+verified: 2026-10-04T15:00:00Z
 status: human_needed
-score: 2/4 roadmap success criteria fully verified (SC1, SC3); SC2 and SC4 verified in code and on one device, with an open breadth or visual confirmation (see human_verification). No FAILED truths.
+score: 2/4 roadmap success criteria fully verified (SC1, SC3); SC2 and SC4 present, wired and evidenced, with an open breadth or visual confirmation (see human_verification). 0 FAILED truths. 0 behavior-unverified.
 covered_files:
-  - app/src/main/AndroidManifest.xml
-  - app/src/main/kotlin/pl/usypianka/domain/Gain.kt
-  - app/src/main/kotlin/pl/usypianka/domain/SessionEngine.kt
-  - app/src/main/kotlin/pl/usypianka/playback/PlaybackClient.kt
-  - app/src/main/kotlin/pl/usypianka/playback/PlaybackService.kt
-  - app/src/main/kotlin/pl/usypianka/ui/PlayerScreen.kt
-  - app/src/main/kotlin/pl/usypianka/ui/PlayerUiState.kt
-  - app/src/main/kotlin/pl/usypianka/ui/PlayerViewModel.kt
   - .planning/phases/01-odtwarzanie-z-timerem/01-01-PLAN.md
   - .planning/phases/01-odtwarzanie-z-timerem/01-01-SUMMARY.md
   - .planning/phases/01-odtwarzanie-z-timerem/01-02-PLAN.md
@@ -26,181 +18,194 @@ covered_files:
   - .planning/phases/01-odtwarzanie-z-timerem/01-06-SUMMARY.md
   - .planning/phases/01-odtwarzanie-z-timerem/01-07-PLAN.md
   - .planning/phases/01-odtwarzanie-z-timerem/01-07-SUMMARY.md
-covered_digest: "v2:sha256:af346de00a707f16b58d46e09e95942a31f942fccaff25faf9d70ca41e14553a"
+  - app/src/main/AndroidManifest.xml
+  - app/src/main/kotlin/pl/usypianka/domain/Gain.kt
+  - app/src/main/kotlin/pl/usypianka/domain/SessionEngine.kt
+  - app/src/main/kotlin/pl/usypianka/playback/PlaybackClient.kt
+  - app/src/main/kotlin/pl/usypianka/playback/PlaybackService.kt
+  - app/src/main/kotlin/pl/usypianka/ui/PlayerScreen.kt
+  - app/src/main/kotlin/pl/usypianka/ui/PlayerUiState.kt
+  - app/src/main/kotlin/pl/usypianka/ui/PlayerViewModel.kt
+  - app/src/test/kotlin/pl/usypianka/domain/SessionEngineTest.kt
+  - app/src/test/kotlin/pl/usypianka/ui/PlayerUiStateTest.kt
+covered_digest: "v2:sha256:15c31d3ceac585a0be39b646095d975a4e663cf7604df2c56f93b843bbbb2799"
 behavior_unverified: 0
 overrides_applied: 0
-re_verification: null
+re_verification:
+  previous_status: human_needed
+  previous_score: "2/4 roadmap success criteria fully verified (SC1, SC3)"
+  gaps_closed: []
+  gaps_remaining: []
+  regressions: []
+  note: "Previous report had no gaps. Re-run because code-review fixes (0186906, a1e9ebd, f4ca98f, 58d9e92, c7f4d49) changed 5 covered source files. All truths re-checked against current code; no regression found."
 gaps: []
 deferred: []
 review_findings_open:
-  # Not gaps: none defeats a ROADMAP success criterion. Source-verified, still open in 01-REVIEW-DISPOSITION.md.
+  # All seven in-scope findings are now fixed in source (01-REVIEW-DISPOSITION.md). Residual: CR-01 and WR-03 are Media3/IPC wiring with no JVM test and no post-fix device run.
   - id: CR-01
-    verdict: "real hardening hole, downgraded to WARNING for Phase 1 (does not defeat any success criterion)"
-  - id: WR-01
-    verdict: "real, rare (needs service death while the process lives); WARNING"
-  - id: WR-02
-    verdict: "real in code (confirmed by reading SessionEngine.stop/start order); needs a synchronous focus denial, for example Start during a phone call; WARNING"
+    verdict: "fixed in code (allowlist + uid check); NOT exercised on a device or by a foreign-controller test; WARNING until the on-device regression smoke passes"
   - id: WR-03
-    verdict: "real, rare; WARNING"
-  - id: WR-04
-    verdict: "real, only after an engine-initiated stop; WARNING"
-  - id: WR-05
-    verdict: "real, sub-second window; cosmetic; INFO-level in practice"
-  - id: WR-06
-    verdict: "real, sub-second window, and the cut falls inside the silent start of the fade-in; INFO-level in practice"
+    verdict: "fixed in code (reconnect once, result code checked, failures only logged); not JVM-testable; WARNING-level residual, no UI error state by design"
+behavior_unverified_items: []
 human_verification:
   - test: "Gapless loop on a second and third device (ROADMAP SC2 asks for 2-3 phones, incl. Samsung or Xiaomi)"
-    expected: "Run the Usypianka Spike procedure from 01-SPIKE.md (10 min screen on plus 10 min locked, discontinuities 0 and underruns 0, plus a 5 min headphone ear test of pink FLAC) on at least one Samsung and one more phone, ideally also an Android 14+ device"
-    why_human: "Needs physical hardware. Only one phone (Xiaomi M2103K19PG, Android 11) was available. An accepted-deviation override is possible, see the Overrides section."
+    expected: "Run the Usypianka Spike procedure from 01-SPIKE.md (10 min screen on plus 10 min locked, discontinuities 0 and underruns 0, plus a 5 min headphone ear test of pink FLAC) on at least one Samsung and one more phone, ideally Android 14+. Alternative: accept the deviation as an override (see Overrides) and move the multi-device run to Phase 3 / before the Play release."
+    why_human: "Needs physical hardware. Only one phone (Xiaomi M2103K19PG, Android 11) was available."
+  - test: "Post-review-fix regression smoke on the Xiaomi (covers CR-01, WR-01, WR-03 wiring that JVM tests cannot reach)"
+    expected: "Install the current debug or release build. Start a 1-min session, lock the screen at once: fade-in, playback and fade-out to silence still work; the notification still appears (app name, noise title, crescent icon) with no play/pause/seek buttons, also on the lock screen; lock-screen and Bluetooth media buttons do nothing (D-14). Start, +5 min, Stop and the volume slider still work. Press Stop, background the app, reopen it: the UI is Idle, not stuck on Running. Optionally force-stop the app mid-session and relaunch: UI starts Idle."
+    why_human: "The on-device evidence in 01-SPIKE.md predates commits f4ca98f, 58d9e92 and c7f4d49. The allowlist changes what the Media3 notification controller is granted (read-only player commands, custom commands for own uid) and the foreground-service promotion depends on Media3 internals that cannot be exercised in a JVM test. The fixer states this was not run on a device."
+  - test: "Foreign MediaController is refused (CR-01 acceptance check)"
+    expected: "With an instrumented test or a small second app with its own uid, connect a MediaController to PlaybackService: clearMediaItems, setMediaItem, play, setPlaybackSpeed and release are refused, sendCustomCommand returns ERROR_PERMISSION_DENIED, and getters (current media item, metadata) still work."
+    why_human: "Needs a second process or instrumented test; the project has no Robolectric or androidTest for the service, and Player.Commands needs Android stubs on the JVM."
   - test: "Cold start has no white flash (UI-01), including Android 12+ splash"
-    expected: "Force-stop the app, launch from the launcher on an Android 12+ phone in a dark room (screen-record if needed). The first frame is near-black (#0B0B0D) with no white frame. Repeat on the Android 11 Xiaomi."
-    why_human: "Visual and timing behaviour. Only static evidence exists (windowBackground, windowSplashScreenBackground in values-v31, no white colour in theme or scheme). The only tested device runs Android 11, so the v31 splash path was never exercised."
+    expected: "Force-stop the app, launch from the launcher in a dark room (screen-record if needed). The first frame is near-black (#0B0B0D) with no white frame. Repeat on the Android 11 Xiaomi and, if available, on an Android 12+ phone."
+    why_human: "Visual and timing behaviour. Only static evidence exists (windowBackground, windowSplashScreenBackground in values-v31). The only tested device runs Android 11, so the v31 splash path was never exercised."
   - test: "Polish plurals and locale rendering on a phone (UI-02)"
     expected: "Polish phone: custom-time dialog preview and the 'Gra przez ...' line read 1 minuta / 2 minuty / 5 minut / 22 minuty and 1 godzina / 2 godziny / 5 godzin (accusative: 1 minutę / 1 godzinę). English phone: 1 minute / 2 minutes. On Android 13+, Settings > Apps > Usypianka > Language offers Polish and English."
     why_human: "Plural resources exist with all four CLDR forms and lint (MissingQuantity) is green, but no on-device rendering is recorded."
   - test: "Release build on a device (R8 minified)"
-    expected: "Install a locally signed copy of app-release-unsigned.apk, Start a 1-minute session, lock the screen, confirm fade-in, playback and fade-out to silence. Confirm no crash from minification (Media3 service, MediaController, Compose)."
-    why_human: "Release build, no INTERNET and no spike assets are verified statically. No on-device launch of the release APK has been recorded (01-07-SUMMARY says no device was attached)."
+    expected: "Install a locally signed copy of app-release-unsigned.apk, Start a 1-minute session, lock the screen, confirm fade-in, playback and fade-out to silence. No crash from minification (Media3 service, MediaController, Compose)."
+    why_human: "Release build, no INTERNET and no spike assets are verified statically. No on-device launch of the release APK has been recorded."
   - test: "Tile preview feel (D-05)"
     expected: "Tapping a tile plays a quiet 3 s preview with no click at the fades. A second tap or Start stops it. Pressing Home stops it. It is quieter than the slider level."
     why_human: "Audible quality and the second-ExoPlayer-in-UI-process assumption (A4) are only checkable on a phone."
   - test: "Notification appearance (A6) and first-Start notification permission on Android 13+"
     expected: "While playing, the notification shows the app name, noise title and small crescent icon with no pause/seek/volume controls (also on the lock screen). The permission dialog appears once on the first Start and playback starts regardless of the answer. Denying it does not stop playback."
-    why_human: "Visual. Android 11 test device has no runtime notification permission, so the Android 13+ path is unexercised."
+    why_human: "Visual. The Android 11 test device has no runtime notification permission, so the Android 13+ path is unexercised."
   - test: "Judgment-tier prohibition review (01-03): 'MUST NOT show a running countdown while audio has stopped'"
-    expected: "Decide whether the open edge cases WR-01, WR-02 and CR-01 (below) are acceptable for Phase 1 or must be closed before Phase 2. Suggested minimum fix set: allowlist LockedPlayer (CR-01), publish Running before startLoop or re-check the player after it (WR-02), reset sessionState in onCreate and onDestroy (WR-01)."
-    why_human: "Judgment-tier prohibition (autonomous verify records a non-authoritative verdict and flags it, per ADR-550 D3). Code shows the countdown-over-silence outcome is reachable only through rare paths, not through the normal flow."
+    expected: "Developer confirms the residual is acceptable: after the fixes the sync-focus-denial path (WR-02) and the dead-service path (WR-01) are closed and unit tested; what remains is only the unexercised CR-01/WR-03 wiring covered by the two items above."
+    why_human: "Judgment-tier prohibition (autonomous verify records a non-authoritative verdict and flags it, per ADR-550 D3). Never a silent pass."
 ---
 
-# Phase 1: Odtwarzanie z timerem - Verification Report
+# Phase 1: Odtwarzanie z timerem - Verification Report (re-verification)
 
 **Phase Goal:** Rodzic wybiera wbudowany szum, ustawia czas i włącza odtwarzanie. Dźwięk łagodnie się pogłaśnia, gra w pętli bez słyszalnych przerw (także po zablokowaniu ekranu), a po upływie czasu płynnie wygasza się do ciszy i zatrzymuje.
 **Verified:** 2026-10-04
 **Status:** human_needed
-**Re-verification:** No, initial verification
-**Mode:** mvp (phase goal is not a User Story string. Verified against the roadmap goal and success criteria as the contract.)
+**Re-verification:** Tak. Poprzedni raport (stale) nie miał gapów, ale pokryte pliki źródłowe zmieniły się po poprawkach z code review. Wszystkie prawdy sprawdzone ponownie na bieżącym kodzie.
+**Mode:** mvp-like (cel fazy nie jest ciągiem User Story; weryfikacja względem celu i kryteriów sukcesu z ROADMAP jako kontraktu).
 
-## Verdict in one paragraph
+## Werdykt
 
-The core path exists, is wired end to end, and is backed by both unit tests and on-device evidence: UI tap, PlaybackClient, MediaSession custom command, SessionEngine, ExoPlayer looping a FLAC, a clock-driven dB-linear fade-in, fade-out and stop, and a countdown from the same state. No success criterion is FAILED and no must-have truth is missing. Status is `human_needed`, not `passed`, for two reasons. First, SC2 asks for 2-3 phones and only one was tested. Second, several visual or Android-version-specific checks (cold-start flash, Android 12+ splash, Polish plural rendering, release launch, notification look) have only static evidence. The code-review findings do not defeat any success criterion, but several are real (verified in source) and breach, in edge cases, a judgment-tier prohibition from plan 01-03. They are carried as warnings with a recommended small fix set.
+Rdzeń fazy jest nadal obecny, połączony end to end i poparty testami jednostkowymi oraz dowodami z urządzenia: tap w UI, PlaybackClient, custom command MediaSession, SessionEngine, ExoPlayer w pętli FLAC, dB-liniowy fade-in i fade-out liczony z zegara, stop, odliczanie z tego samego stanu. Poprawki z code review (CR-01, WR-01..WR-06) nie cofnęły żadnej prawdy: przeczytałem bieżący kod pięciu zmienionych plików i nowe testy, a pełny `testDebugUnitTest` kończy się kodem 0 (SessionEngineTest 9, SessionTimelineTest 10, PlayerUiStateTest 34, 0 błędów). Żadne kryterium nie jest FAILED. Status pozostaje `human_needed` z tych samych powodów co wcześniej (SC2 prosi o 2-3 telefony, testowany był jeden; kontrole wizualne i Android 12+/13+ mają tylko dowód statyczny) oraz z jednego powodu nowego: poprawki usługi (allowlista komend, uid, reset stanu, reconnect klienta) nie były uruchomione na urządzeniu, a dowody ze spike'a z urządzenia je poprzedzają.
 
 ## Goal Achievement
 
-### Observable Truths (ROADMAP success criteria, the contract)
+### Observable Truths (ROADMAP success criteria, kontrakt)
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| SC1 | Parent picks white/pink/brown, sets 15/30/45/60 min or any custom value, and starts with one button | ✓ VERIFIED | `PlayerScreen.kt`: three `NoiseTile`s from `Noise.entries`; `FilterChip`s from `TimePreset.entries` plus "Other" opening `TimePickerDialog`; one `Button` (Start/Stop). `PlayerUiState.applyCustomDuration` validates hours 0-8, minutes 0-59, 1 min..8 h via `DurationSpec`. 28 `PlayerUiStateTest` cases pass (chips map to exact ms, only four presets, custom bounds, rejected value leaves state unchanged). Start path on device: spike section "Main-app tracer check" records Start gives fade-in and countdown from 15:00. Custom dialog and chips are not recorded on-device (unit tested plus read). |
-| SC2 | Several-second fade-in; loops without audible gaps or clicks at the seam; checked on 2-3 physical phones incl. Xiaomi or Samsung | ? UNCERTAIN (WARNING, human decision requested) | Fade-in: `SessionTimeline.intro` is 5 s, dB-linear from -60 dB, recomputed from the clock. `SessionEngine.start` sets volume 0f before `startLoop`. Test `fadeInIsLinearInDbFromMinusSixtyToZeroOverFiveSeconds` and the 15-min engine test pass. Loop: single `MediaItem`, `REPEAT_MODE_ONE`, exactly periodic FLAC assets (30 s, `noCompress`), no seek-to-0. On device (01-SPIKE.md): FLAC and WAV, 10 min screen-on plus 10 min locked, discontinuities 0, underruns 0, `maxResidual` 0.000051 (about 20x under threshold), clean headphone ear test (5 min each), plus an independent orchestrator logcat check. **Shortfall:** one device only (Xiaomi, MIUI, Android 11), so the "2-3 phones" breadth is not met. No Samsung, no Android 14+. 01-SPIKE.md documents this honestly as a carried risk. Open spike item: 688 and 412 flushes in 10 min is far above the ~20 loop wraps. The cause was not investigated, and each flush clears the detector history, so the probe is weaker than it looks, with the ear test as the backstop. Classification: gapless behaviour is evidenced on the one device. The roadmap's explicit device-count clause is unmet, and that is a scope decision for the developer. See Overrides. |
-| SC3 | Countdown shown while playing; playback continues after screen lock; at the end it fades to silence over several seconds and stops by itself, without an abrupt cut | ✓ VERIFIED (behavior-dependent, device evidence plus tests) | Countdown: `PlayerScreen.RunningInfo` uses `PlayerUiState.remainingMs(nowMs)` = `endAtMs - elapsedRealtime`, rounded up by `formatCountdown`, ticking at 250 ms while STARTED. Lock: foreground `PlaybackService : MediaSessionService` (`mediaPlayback`, partial wake lock via `WAKE_MODE_LOCAL`); device: countdown dropped by about 1 min after a 1-min lock, 25-min runs ran through with screen locked. End: `outro` is 10 s dB-linear and lies inside the set time (silence at 0:00); `finish()` sets volume 0f, `stopAndRelease`, state Idle. Tests pass: `fifteenMinuteSessionFadesInHoldsFadesOutAndStopsExactlyAtTheEnd`, `eightHourSessionEndsCleanly`, `lateTickStillYieldsTheRightValue`, `extendInsideTheFinalFadeIs...`, `manualStopReturnsToIdleAtOnceAndRampsDownWithoutAStep`. Device: "Pink 1 min" started then locked immediately, audible end fade reaching silence at about 1:00, nothing plays afterwards. Residual level at the cut: fade-out ends at -60 dB relative to the slider, so at slider 100 % the final `volume 0f` jump is from about -60 dBFS (inaudible). |
-| SC4 | Whole app dark with no white flash at start; PL or EN per phone language; correct numeral forms (1 minuta / 2 minuty / 5 minut) | ? UNCERTAIN (WARNING, human confirmation requested) | Dark: `themes.xml` and `values-v31/themes.xml` set `windowBackground` and `colorBackground` to #FF0B0B0D plus `windowSplashScreenBackground` on 12+. `UsypiankaTheme` is dark-only. The only `#FFFFFFFF` in `app/src/main` is the notification small-icon alpha mask (normal). Locale: `generateLocaleConfig = true` plus `resources.properties` (`unqualifiedResLocale=en-US`); `values-pl/strings.xml` defines one/few/many/other for hours and minutes plus accusative variants; `PlayerScreen` and `TimePickerDialog` use `pluralStringResource` (no string concatenation), and lint reports no missing translation or quantity. Not evidenced: the first-frame look on an actual cold start, the Android 12+ splash (test device is Android 11), and rendering of the Polish plurals on a phone. All are visual, so they go to human verification rather than being marked verified from static values. |
+| SC1 | Rodzic wybiera biały/różowy/brązowy, ustawia 15/30/45/60 min lub dowolny czas i startuje jednym przyciskiem | ✓ VERIFIED | `PlayerScreen.kt` (niezmieniony od poprzedniej weryfikacji): kafelki z `Noise.entries`, chipy z `TimePreset.entries` plus "Inny" otwierający `TimePickerDialog`, jeden przycisk Start/Stop. `PlayerUiState.applyCustomDuration` waliduje godziny 0-8, minuty 0-59, zakres 1 min..8 h przez `DurationSpec`. 34 przypadki `PlayerUiStateTest` przechodzą (w tym 6 nowych dla WR-04/05/06). Po poprawkach `onStartClicked` nadal woła `playbackClient.start(selectedNoise, durationMs, volume)` (`PlayerViewModel.kt:86-92`), tylko dodatkowo zapisuje `startRequestedAtMs`; `startEnabled` odrzuca drugie stuknięcie w oknie 1,5 s, co nie blokuje normalnego startu. |
+| SC2 | Kilkusekundowe narastanie; pętla bez słyszalnych przerw i trzasków na łączeniu; sprawdzone na 2-3 fizycznych telefonach, w tym Xiaomi lub Samsung | ? UNCERTAIN (WARNING, wymagana decyzja developera) | Fade-in: `SessionTimeline.intro` 5 s, dB-liniowo od -60 dB, liczone z zegara. `SessionEngine.start` ustawia `setVolume(0f)` przed `startLoop` (`SessionEngine.kt:54-55`), czyli po przestawieniu kolejności z WR-02 nadal startuje od ciszy. Pętla: jeden `MediaItem`, `REPEAT_MODE_ONE`, FLAC okresowe 30 s, bez seek-to-0 (`ExoAudioOutput.startLoop`, `PlaybackService.kt:264-273`, niezmienione). Test `fifteenMinuteSessionFadesInHoldsFadesOutAndStopsExactlyAtTheEnd` przechodzi. Na urządzeniu (01-SPIKE.md): FLAC i WAV, 10 min ekran włączony plus 10 min zablokowany, discontinuities 0, underruns 0, `maxResidual` 0,000051, czysty test w słuchawkach. **Niedobór:** jedno urządzenie (Xiaomi, MIUI, Android 11); brak Samsunga i Androida 14+. Otwarta uwaga ze spike'a (688 i 412 flushów w 10 min przy ~20 zawinięciach pętli, przyczyna niezbadana, detektor osłabiony) pozostaje; ucho w słuchawkach jest backstopem. To decyzja o zakresie, patrz Overrides. |
+| SC3 | Odliczanie widoczne podczas grania; odtwarzanie trwa po zablokowaniu ekranu; na końcu płynne wyciszenie przez kilka sekund i samoczynne zatrzymanie, bez nagłego urwania | ✓ VERIFIED (zachowanie zależne od stanu: testy plus dowód z urządzenia sprzed poprawek; patrz human item "regression smoke") | Odliczanie: `PlayerUiState.remainingMs(nowMs)` = `endAtMs - elapsedRealtime`, `endAtMs` publikowane przez silnik w `Running` (`SessionEngine.kt:53`, `extend` aktualizuje, `:63`). Blokada ekranu: `PlaybackService : MediaSessionService` (`mediaPlayback`, `WAKE_MODE_LOCAL`, manifest `foregroundServiceType="mediaPlayback"`). Koniec: `outro` 10 s dB-liniowo wewnątrz ustawionego czasu, `finish()` robi `setVolume(0f)`, `stopAndRelease`, Idle (`SessionEngine.kt:105-111`). Testy: `fifteenMinuteSession...`, `eightHourSessionEndsCleanly`, `extendInsideTheFinalFade...`, `manualStopReturnsToIdle...` przechodzą po poprawkach. Urządzenie (01-SPIKE.md, sprzed poprawek): countdown spadł o ok. 1 min po 1 min blokady, sesje 25 min przy zablokowanym ekranie, końcowy fade słyszalny do ciszy. Regresja z poprawek: sprawdziłem, że `onCreate` resetuje stan do Idle tylko przy nowej instancji usługi (a ta zachowuje działającą sesję przez cały czas życia instancji), `onDestroy` woła `engine.release()` po `scope.cancel()`, a allowlista nie dotyka ścieżki zasilania foreground (opartej na `playWhenReady`/stanie playera, nie na komendach kontrolera). Z kodu regresji nie widać, ale ścieżka Media3 nie była uruchomiona po zmianie, stąd human item. |
+| SC4 | Cała aplikacja ciemna, bez białego błysku przy starcie; PL lub EN wg języka telefonu; poprawna odmiana (1 minuta / 2 minuty / 5 minut) | ? UNCERTAIN (WARNING, wymagane potwierdzenie człowieka) | Pliki zasobów niezmienione od poprzedniej weryfikacji: `themes.xml` i `values-v31/themes.xml` z `windowBackground`/`colorBackground` #FF0B0B0D oraz `windowSplashScreenBackground` na 12+; `UsypiankaTheme` tylko ciemny; `generateLocaleConfig = true`; `values-pl/strings.xml` z formami one/few/many/other; `pluralStringResource` w UI. Brak dowodu: pierwsza klatka przy zimnym starcie, splash Androida 12+, renderowanie polskich liczebników na telefonie. |
 
-**Score:** 2 of 4 criteria fully verified. 2 present and wired, awaiting human or developer decision. 0 failed. 0 behavior-unverified.
+**Score:** 2 z 4 kryteriów w pełni zweryfikowane, 2 obecne i połączone, czekają na decyzję lub potwierdzenie. 0 FAILED. 0 behavior-unverified.
 
-### Plan-level truths and prohibitions (supplementary, checked against source)
+### Dodatkowe prawdy planów i prohibitions (sprawdzone na bieżącym kodzie)
 
 | Item | Status | Evidence |
 |------|--------|----------|
-| Fade-out inside set time, finishes exactly at end (D-11) | ✓ VERIFIED | `SessionTimeline.isFinished`, engine test asserts `stoppedAt == 900_000` |
-| Manual Stop returns UI to Idle at once, ramp from current level (D-13) | ✓ VERIFIED (deviation: ramp is 2.5 s, not 1.5 s) | `SessionEngine.stop`, `STOP_RAMP_MS = 2_500`. Documented user-requested change from device feedback (01-SPIKE.md, commit 14406d8, cooldown pinned by `startStaysDisabledUntilTheStopRampEnds`). 01-03 and 01-05 plan text still say 1.5 s; the code and tests are consistent at 2.5 s. |
-| +5 min inside the final fade continuous, recovers at the fade-in slope, no cap (D-17) | ✓ VERIFIED | `SessionTimeline.extend`; two extend tests pass; `MAX_EXTEND_MS` bounds only the single command's argument |
-| Volume applies on the same tick, keeps fade offset (D-07) | ✓ VERIFIED | `volumeChangesApplyOnTheSameTick`, `volumeStaysLiveWhileRunning` |
-| Tiles and chips locked while running, slider/Stop/+5 stay (D-02) | ✓ VERIFIED | `selectionEnabled`, `noiseAndChipsAreLockedWhileRunning` |
-| Release: no INTERNET, no debuggable, no spike assets, R8 on | ✓ VERIFIED (static) | Release merged-manifest report has no INTERNET or `debuggable`; `app-release-unsigned.apk` listing contains only `assets/sounds/{white,pink,brown}.flac` (no `spike_*`, no `pink.wav`); `isMinifyEnabled` and `isShrinkResources` true. On-device launch of release not recorded (human item). |
-| Prohibition: starts from silence, below slider level | ✓ resolved | `output.setVolume(0f)` before `startLoop`; intro from -60 dB |
-| Prohibition: never runs without a time limit / past the set time | ✓ resolved | `DurationSpec.MAX_MS` = 8 h enforced in service and UI; `finish()` at `endMs`. A session can only be extended by the explicit +5 min. |
-| Prohibition: no start from background or other apps | ✓ resolved | Start only via custom command, gated by `controller.packageName == packageName` (WR-note: uid is stronger); `COMMAND_PLAY_PAUSE` removed for foreign controllers; no receivers, no boot or alarm path. |
-| Prohibition (judgment): no running countdown over silence | ⚠ FLAGGED, `unverified-prohibition: human review recommended` | Normal flows are covered (focus loss, noisy, error stop the session). Edge paths remain: WR-02 (sync focus denial at Start), WR-01 (service death), CR-01 (foreign `clearMediaItems`). See Review Findings. Non-authoritative verdict: acceptable for Phase 1, recommend closing before Phase 2. |
-| Prohibition (judgment): no medical or child-directed claims in copy | ✓ resolved | `strings.xml` and `values-pl`: descriptive wording only ("Softer, like rain", "Deep, like a waterfall") |
-| Prohibition (judgment): preview never louder than slider, never outlives app | ✓ resolved in code, feel needs human | `PreviewPlayer` level = `sliderToDb - 10`; `onScreenStopped` on ON_STOP; `onCleared` releases |
+| Fade-out wewnątrz ustawionego czasu, kończy dokładnie na końcu (D-11) | ✓ VERIFIED | `SessionTimeline.isFinished`; test asercją `stoppedAt == 900_000` zielony po poprawkach |
+| Ręczny Stop: UI od razu Idle, rampa od bieżącego poziomu (D-13) | ✓ VERIFIED (odstępstwo: rampa 2,5 s, nie 1,5 s, na życzenie użytkownika po teście urządzenia) | `SessionEngine.stop` (`:66-73`), `STOP_RAMP_MS`; `manualStopReturnsToIdleAtOnceAndRampsDownWithoutAStep` |
+| +5 min w końcowym fade ciągłe (D-17) | ✓ VERIFIED | `extend`, test `extendInsideTheFinalFade...` |
+| Głośność od razu, zachowuje offset fade (D-07) | ✓ VERIFIED | `volumeChangesApplyOnTheSameTick`; po WR-05 suwak jest także przekazywany w oknie "Start w locie" (`shouldSendVolume`, testy `volumeIsForwardedWhileAStartIsInFlight`, `theInFlightWindowEndsWhenRunningArrivesOrTimesOut`) |
+| Kafelki i chipy zablokowane w trakcie (D-02) | ✓ VERIFIED | `selectionEnabled`, `noiseAndChipsAreLockedWhileRunning` |
+| Release: brak INTERNET, brak debuggable, brak zasobów spike, R8 | ✓ VERIFIED (statycznie) | Manifest źródłowy: tylko FOREGROUND_SERVICE, FOREGROUND_SERVICE_MEDIA_PLAYBACK, WAKE_LOCK, POST_NOTIFICATIONS; brak INTERNET i `debuggable`. Wcześniejszy raport APK (tylko trzy FLAC w `assets/sounds`) dotyczy plików nietkniętych poprawkami. |
+| Prohibition: start z ciszy, poniżej poziomu suwaka | ✓ resolved | `output.setVolume(0f)` przed `startLoop`, intro od -60 dB |
+| Prohibition: nigdy bez limitu czasu / po ustawionym czasie | ✓ resolved | `DurationSpec.MAX_MS` 8 h wymuszone w usłudze (`PlaybackService.kt:187`) i UI; `finish()` na końcu |
+| Prohibition: brak startu z tła lub innych aplikacji | ✓ resolved, wzmocnione | Start tylko przez custom command; `onCustomCommand` odrzuca kontrolery o innym uid (`ERROR_PERMISSION_DENIED`, `:178-180`); obcy kontroler dostaje `SessionCommands.EMPTY` plus allowlistę wyłącznie getterów (`:163-168`, `:234-248`); `LockedPlayer` to allowlista (`:252-256`), więc komendy dodane w przyszłych wersjach Media3 są domyślnie zabronione. Brak receiverów, boot, alarmów. |
+| Prohibition (judgment): brak odliczania nad ciszą | ⚠ FLAGGED, `unverified-prohibition: human review recommended` (poprawione względem poprzedniego raportu) | Ścieżki brzegowe z review zamknięte w kodzie i objęte testami JVM: WR-02 (`aStopRaisedSynchronouslyInsideStartLoopIsNotSwallowed`), WR-01 (`releaseResetsTheSharedStateAndCancelsTheTicker` plus reset w `onCreate`/`onDestroy`), WR-06, WR-04. Pozostaje niepotwierdzone na urządzeniu: CR-01 i WR-03 (wiring Media3/IPC). Werdykt nieautorytatywny. |
+| Prohibition (judgment): brak twierdzeń medycznych/dziecięcych | ✓ resolved | `strings.xml` i `values-pl`: opisowe sformułowania, niezmienione |
+| Prohibition (judgment): podgląd nigdy głośniejszy niż suwak, nie przeżywa aplikacji | ✓ resolved w kodzie, odczucie wymaga człowieka | `PreviewPlayer` -10 dB względem suwaka; `onScreenStopped` na ON_STOP; `onCleared` zwalnia (`PlayerViewModel.kt:59-66,104-106`) |
 
 ### Required Artifacts
 
 | Artifact | Status | Details |
 |----------|--------|---------|
-| `domain/Gain.kt`, `domain/SessionEngine.kt` | ✓ VERIFIED | Substantive, pure Kotlin, wired through `PlaybackService`. Tests: 5 engine, 10 timeline |
-| `playback/PlaybackService.kt`, `PlaybackClient.kt` | ✓ VERIFIED | Real Media3 service and controller; used by `UsypiankaApp.container` and `MainActivity` |
-| `ui/PlayerScreen.kt`, `PlayerViewModel.kt`, `PlayerUiState.kt`, `TimePickerDialog.kt` | ✓ VERIFIED | `MainActivity.setContent` renders `PlayerScreen(viewModel(factory = PlayerViewModel.Factory))`; 28 UI-state tests |
-| `app/src/main/assets/sounds/{white,pink,brown}.flac` | ✓ VERIFIED | Present (1.9 / 2.1 / 2.2 MB), loaded as `asset:///sounds/...` via `Noise.assetPath` |
-| `tools/generate_noise.py`, `tools/verify_assets.py` | ✓ VERIFIED | Present. IN-04 (seam check weak, vacuous for noise) noted, not blocking, because periodicity comes from FFT construction and the device test confirmed |
-| `values/themes.xml`, `values-v31/themes.xml`, `values-pl/strings.xml`, `resources.properties` | ✓ VERIFIED (static) | See SC4 |
-| `playback/PreviewPlayer.kt`, release and debug `AudioDiagnostics` twins | ✓ VERIFIED (static) | Debug-only code in `src/debug`; release twin is a no-op |
+| `domain/Gain.kt`, `domain/SessionEngine.kt` | ✓ VERIFIED | Pure Kotlin, istotne, podłączone przez `PlaybackService`. Dodano `release()`; 9 testów silnika, 10 testów timeline |
+| `playback/PlaybackService.kt`, `PlaybackClient.kt` | ✓ VERIFIED | Prawdziwa usługa Media3 i kontroler; allowlista `LOCKED_PLAYER_COMMANDS`, sprawdzanie uid, reconnect. Używane przez `UsypiankaApp.container` i `MainActivity` |
+| `ui/PlayerScreen.kt`, `PlayerViewModel.kt`, `PlayerUiState.kt`, `TimePickerDialog.kt` | ✓ VERIFIED | `MainActivity.setContent` renderuje `PlayerScreen`; 34 testy stanu UI |
+| `assets/sounds/{white,pink,brown}.flac`, `tools/*.py` | ✓ VERIFIED | Pliki nietknięte poprawkami |
+| `values/themes.xml`, `values-v31/themes.xml`, `values-pl/strings.xml`, `resources.properties` | ✓ VERIFIED (statycznie) | Patrz SC4 |
+| `playback/PreviewPlayer.kt`, bliźniaki `AudioDiagnostics` | ✓ VERIFIED (statycznie) | Nietknięte poprawkami |
 
 ### Key Link Verification
 
 | From | To | Via | Status |
 |------|----|-----|--------|
 | `PlayerScreen` | `PlayerViewModel` | `collectAsStateWithLifecycle`, `onStartClicked`/`onStopClicked`/`onExtendClicked`/`onVolumeChanged` | WIRED |
-| `PlayerViewModel` | `PlaybackClient` | `container.playbackClient.start/stop/extend/setVolume` | WIRED |
-| `PlaybackClient` | `PlaybackService` | `MediaController.sendCustomCommand(ACTION_*)` | WIRED |
-| `PlaybackService` | `SessionEngine` | `onCustomCommand` dispatches to `engine.start/extend/stop/setVolume` | WIRED |
-| `SessionEngine` | UI | writes `container.sessionState`, which `PlayerViewModel` collects into `PlayerUiState.withSession` | WIRED (same process) |
-| `MainActivity` | `PlaybackClient` | `connect()` in onStart, `release()` in onStop | WIRED |
-| `PlayerViewModel` | `PreviewPlayer` | lazy factory, `play`/`stop`/`release` | WIRED |
+| `PlayerViewModel` | `PlaybackClient` | `container.playbackClient.start/stop/extend/setVolume` (`:83,91,95,101`) | WIRED |
+| `PlaybackClient` | `PlaybackService` | `MediaController.sendCustomCommand(ACTION_*)` z reconnectem (`:64-91`) | WIRED |
+| `PlaybackService` | `SessionEngine` | `onCustomCommand` rozdziela na `engine.start/extend/stop/setVolume` (`:182-219`) | WIRED |
+| `SessionEngine` | UI | zapis do `container.sessionState`, kolekcja w `PlayerViewModel.init` przez `withSession(s, now())` | WIRED |
+| `PlaybackService.onCreate/onDestroy` | `sessionState` | reset do Idle przy utworzeniu i `engine.release()` przy zniszczeniu | WIRED (nowe, WR-01) |
+| `MainActivity` | `PlaybackClient` | `connect()` w onStart, `release()` w onStop | WIRED |
+| `PlayerViewModel` | `PreviewPlayer` | leniwa fabryka, `play`/`stop`/`release` | WIRED |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data | Source | Real data | Status |
 |----------|------|--------|-----------|--------|
-| Countdown (`RunningInfo`) | `endAtMs` | `SessionEngine` publishes `Running(noise, tl.endMs)`; `extend` updates it | Yes | ✓ FLOWING |
-| Audio gain | `player.volume` | `Gain.amplitude(sliderToDb + offsetDb(now))` every 20 ms (500 ms in body) from `elapsedRealtime` | Yes | ✓ FLOWING |
-| Playing noise label | `Running.noise` | engine | Yes | ✓ FLOWING |
+| Odliczanie (`RunningInfo`) | `endAtMs` | `SessionEngine` publikuje `Running(noise, tl.endMs)`; `extend` aktualizuje | Tak | ✓ FLOWING |
+| Gain audio | `player.volume` | `Gain.amplitude(sliderToDb + offsetDb(now))` co 20 ms (500 ms w trzonie) z `elapsedRealtime` | Tak | ✓ FLOWING |
+| Etykieta grającego szumu | `Running.noise` | silnik | Tak | ✓ FLOWING |
+| Cooldown Startu | `startCooldownUntilMs` | `withSession` (przerwanie przed `endAtMs`) i `onStopRequested` | Tak | ✓ FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| JVM unit tests (existing result files) | read `app/build/test-results/testDebugUnitTest/*.xml` | SessionEngineTest 5/5, SessionTimelineTest 10/10, PlayerUiStateTest 28/28, 0 failures, 0 errors | ✓ PASS (not re-run; the orchestrator reports build, lint and tests green) |
-| Release APK content | `unzip -l app-release-unsigned.apk` | only the three FLACs under `assets/sounds` | ✓ PASS |
-| Release manifest | grep merger report for INTERNET, debuggable, Spike | none | ✓ PASS |
-| Debt markers | grep TODO/FIXME/TBD/XXX/HACK in `app/src` and `tools` | none | ✓ PASS |
-| Gapless on device | n/a (no device attached) | recorded in 01-SPIKE.md (one device) | ? device evidence only, see SC2 |
+| Pełny test JVM na bieżących źródłach | `./gradlew.bat testDebugUnitTest --offline -q` (jednorazowo) | exit 0; pliki wyników: SessionEngineTest 9/9, SessionTimelineTest 10/10, PlayerUiStateTest 34/34, 0 failures, 0 errors | ✓ PASS |
+| Istnienie testów dla poprawek | odczyt `SessionEngineTest.kt:156-214` | WR-02, WR-06, restart podczas rampy, WR-01 `release` obecne i sensowne (asercje na stanie Idle, `stoppedAt`, liczbie pętli, braku zdarzeń po `release`) | ✓ PASS |
+| Znaczniki długu | grep TODO/FIXME/TBD/XXX/HACK w `app/src` i `tools` | brak | ✓ PASS |
+| Manifest | odczyt `AndroidManifest.xml` | brak INTERNET, brak `debuggable`, usługa `mediaPlayback` | ✓ PASS |
+| Pętla na urządzeniu | brak podłączonego urządzenia | dowód w 01-SPIKE.md (jedno urządzenie, sprzed poprawek) | ? SKIP, patrz SC2 i human items |
 
-Step 7c (probes): no `probe-*.sh` declared by any plan; skipped.
+Step 7c (probes): żaden plan nie deklaruje `probe-*.sh`; pominięte.
 
 ### Requirements Coverage
 
-All ten IDs from the phase (ROADMAP) appear in at least one PLAN `requirements:` field. No orphaned requirement.
+Wszystkie 10 ID z fazy występuje w polu `requirements:` co najmniej jednego PLAN (01-01: UI-01; 01-02: LIB-01, PLAY-02; 01-03: PLAY-01, PLAY-05, PLAY-06, TIME-03, UI-02; 01-04: PLAY-02; 01-05: TIME-01..03; 01-06: PLAY-01, TIME-01..03, UI-01, UI-02; 01-07: PLAY-01, UI-01, UI-02). REQUIREMENTS.md mapuje do Phase 1 dokładnie te same 10 ID. Brak osieroconych.
 
 | Requirement | Source plan(s) | Status | Evidence |
 |-------------|----------------|--------|----------|
-| PLAY-01 (choose sound, start playback) | 01-03, 01-06, 01-07 | ✓ SATISFIED | tiles, Start, `ACTION_START`; device Start confirmed |
-| PLAY-02 (gapless loop, no clicks) | 01-02, 01-04 | ? SATISFIED on one device, multi-device open | SC2 |
-| PLAY-05 (several-second fade-in) | 01-03 | ✓ SATISFIED | 5 s dB-linear, tests, device |
-| PLAY-06 (fade to silence then stop, no abrupt cut) | 01-03 | ✓ SATISFIED | 10 s dB-linear inside set time, tests, device 1-min locked end test |
-| TIME-01 (15/30/45/60 chips) | 01-05, 01-06 | ✓ SATISFIED | `TimePreset`, tests |
-| TIME-02 (custom time) | 01-05, 01-06 | ✓ SATISFIED | `applyCustomDuration`, `TimePickerDialog`, tests (dialog layout on-device pending, human item) |
-| TIME-03 (remaining time visible) | 01-03, 01-05, 01-06 | ✓ SATISFIED | countdown, device lock/unlock check |
-| LIB-01 (built-in white, pink, brown) | 01-02 | ✓ SATISFIED | three FLAC assets, verifier PASS recorded, equal A-weighted level (D-08) |
-| UI-01 (dark UI, no glare) | 01-01, 01-06, 01-07 | ? SATISFIED statically, visual check pending | SC4 |
-| UI-02 (PL and EN, Polish plurals) | 01-03, 01-06, 01-07 | ? SATISFIED statically, on-device rendering pending | SC4 |
+| PLAY-01 | 01-03, 01-06, 01-07 | ✓ SATISFIED | kafelki, Start, `ACTION_START`; Start z urządzenia potwierdzony |
+| PLAY-02 | 01-02, 01-04 | ? SATISFIED na jednym urządzeniu, szerokość otwarta | SC2 |
+| PLAY-05 | 01-03 | ✓ SATISFIED | 5 s dB-liniowo, testy, urządzenie |
+| PLAY-06 | 01-03 | ✓ SATISFIED | 10 s dB-liniowo, testy, urządzenie |
+| TIME-01 | 01-05, 01-06 | ✓ SATISFIED | `TimePreset`, testy |
+| TIME-02 | 01-05, 01-06 | ✓ SATISFIED | `applyCustomDuration`, `TimePickerDialog`, testy (układ dialogu na urządzeniu w human items) |
+| TIME-03 | 01-03, 01-05, 01-06 | ✓ SATISFIED | odliczanie, test blokada/odblokowanie na urządzeniu |
+| LIB-01 | 01-02 | ✓ SATISFIED | trzy FLAC, równy poziom A-ważony (D-08) |
+| UI-01 | 01-01, 01-06, 01-07 | ? SATISFIED statycznie, kontrola wizualna czeka | SC4 |
+| UI-02 | 01-03, 01-06, 01-07 | ? SATISFIED statycznie, render na telefonie czeka | SC4 |
 
-`REQUIREMENTS.md` traceability still shows all ten as "Pending" and the checkboxes are unticked. This is a bookkeeping update for the orchestrator to apply once the human items are accepted.
+REQUIREMENTS.md nadal pokazuje wszystkie 10 jako "Pending" z niezaznaczonymi checkboxami. To księgowość dla orkiestratora po zaakceptowaniu elementów ludzkich.
 
 ### Anti-Patterns Found
 
-None blocking. No TODO, FIXME, TBD, XXX or HACK in `app/src` or `tools`. No stubbed returns on the data path. Hardcoded values are named constants (D-xx decisions).
+Brak blokujących. Brak TODO/FIXME/TBD/XXX/HACK w `app/src` ani `tools`. Brak pustych implementacji na ścieżce danych. Wartości na sztywno to nazwane stałe (`START_PENDING_MS`, `STOP_COOLDOWN_MS`, `LOCKED_PLAYER_COMMANDS`).
 
-## Review Findings Assessment (01-REVIEW.md, verified against source, not recall)
+## Ocena poprawek z review (sprawdzone w źródłach, nie z pamięci)
 
-None of CR-01 or WR-01..06 defeats a ROADMAP success criterion, so none is recorded as a gap. The normal flow (Start, lock, end fade, Stop, extend) does not touch any of these paths. Each is nonetheless checked below because they breach, in edge cases, the plan 01-03 judgment-tier prohibition "no countdown over silence".
+Żadna poprawka nie cofnęła prawdy z ROADMAP. Wszystkie 7 w zakresie jest naprawionych w kodzie.
 
-| ID | Claim checked in source | Result | Severity for Phase 1 |
-|----|-------------------------|--------|----------------------|
-| CR-01 | `LockedPlayer` removes exactly 10 commands (`PlaybackService.kt:212-227`); `COMMAND_CHANGE_MEDIA_ITEMS`, `COMMAND_SET_MEDIA_ITEM`, `COMMAND_PREPARE`, `COMMAND_SET_SPEED_AND_PITCH` etc. stay in the available set; service is `exported="true"` and `onConnectAsync` accepts every controller (`:135-151`); package-name check, not uid. Confirmed. Part of the reviewer's text is unproven here: whether `COMMAND_RELEASE` from a controller can release the shared player. In Media3, controller `release()` normally only disconnects the controller. Could not check Media3 sources offline. | Real but bounded: another installed app can clear or replace the media item (silence), or alter speed. It cannot start playback (`COMMAND_PLAY_PAUSE` removed) and cannot invoke custom commands (package gate). Stop still works afterwards (`stop()` only needs `timeline != null`), and the session ends at its timer. Hardening and authorization gap against the D-14 intent, not a failure of the parent flow. Downgraded from critical to WARNING for this phase. Should be closed before the Play release. The cheap fix is the allowlist the reviewer proposes. |
-| WR-01 | `onDestroy` never resets the process-wide `sessionState` (`PlaybackService.kt:115-124`; state lives in `AppContainer`). Confirmed. | Needs service death while the process survives. The Media3 default `onTaskRemoved` keeps a playing service alive, and on-device lock tests never hit it. Rare, but if hit, Stop cannot recover the state. WARNING. |
-| WR-02 | `SessionEngine.start` publishes `Running` after `output.startLoop` (`SessionEngine.kt:50-53`); `stop()` returns early when the state is `Idle` (`:65`), and the service listener calls `stop()` on a non-user pause. If ExoPlayer reports a focus denial synchronously inside `play()` (its normal behaviour, listener events flush on the caller's thread), the stop is swallowed and `Running` is then published over silence. Confirmed in code. Not run against a device. | Trigger: Start tapped while the phone cannot obtain audio focus (for example during a call). User can still press Stop. WARNING. |
-| WR-03 | `PlaybackClient.connect()` returns when `future != null` even if failed; `send()` swallows failures (`:20-24, 55-66`). Confirmed. | Rare (service crash or connect failure). WARNING. |
-| WR-04 | Cooldown armed only in `onStopClicked`; engine-initiated stops leave Start enabled during the ramp; `start()` restart branch does `setVolume(0f)` then `stopAndRelease()` (`SessionEngine.kt:41-44`). Confirmed. | Only after an interruption-driven stop. Interruption policy is replaced by PLAY-07 in Phase 3. WARNING. |
-| WR-05 | `onVolumeChanged` sends only when `isRunning` (`PlayerViewModel.kt:80-84`). Confirmed. | Window is the controller round trip (hundreds of ms). Cosmetic. |
-| WR-06 | A second Start tap before `Running` arrives re-enters `start()` (restart branch). Confirmed. | Cut happens within the first fraction of the fade-in where the gain is effectively -80 dB or lower, so it is inaudible. Cosmetic. |
-| IN-01 | Any transient focus loss ends the session (documented user decision, Phase 3 PLAY-07). | Accepted as Phase 1 policy. Phase 3 SC2 covers it. |
+| ID | Co sprawdziłem w bieżącym kodzie | Wynik |
+|----|----------------------------------|-------|
+| CR-01 | `LOCKED_PLAYER_COMMANDS` to osiem getterów (`PlaybackService.kt:234-248`); `LockedPlayer` nadpisuje `getAvailableCommands` i `isCommandAvailable`; `onConnectAsync` daje obcym `SessionCommands.EMPTY` plus tę samą allowlistę; `isOwnApp` używa `controller.uid == Process.myUid()` i w `onConnectAsync`, i w `onCustomCommand` | Poprawka zgodna z opisem w 01-REVIEW-FIX.md. Pytanie o `COMMAND_RELEASE` jest bezprzedmiotowe (komenda zabroniona). Brak testu JVM (Player.Commands wymaga stubów Androida); brak uruchomienia na urządzeniu i testu obcego kontrolera. Dwa human items. Nie mogłem sprawdzić źródeł Media3 offline, więc zdanie autora poprawki o przecięciu zdarzenia `onAvailableCommandsChanged` z zestawem sesji przyjmuję jako niezweryfikowane. Dla obcych kontrolerów zestaw sesyjny jest tylko do odczytu, więc nawet surowe zdarzenie nie powinno rozszerzyć uprawnień. |
+| WR-01 | `onCreate` ustawia `sessionState.value = Idle` przed budową silnika; `onDestroy` wywołuje `engine?.release()`; `SessionEngine.release()` anuluje ticker, zeruje timeline i ustawia Idle | Potwierdzone, test `releaseResetsTheSharedStateAndCancelsTheTicker` zielony |
+| WR-02 | `start()` ustawia `timeline` i `state = Running` przed `setVolume(0f)` i `startLoop` (`SessionEngine.kt:49-55`); `stop()` z wnętrza `startLoop` znajduje żywą sesję, a kończące `launchTicker()` w `start()` zastępuje ticker z `stop()` przy `stopping == true`, więc rampa dochodzi do `finish()` | Potwierdzone testem `aStopRaisedSynchronouslyInsideStartLoopIsNotSwallowed` (Idle, `stoppedAt` ustawione, głośność 0) |
+| WR-03 | `connect()` porzuca nieudany future; `send()` zwalnia martwy kontroler i ponawia raz, nie ponawia, gdy zwolniony celowo (`future !== pending`); wynik `sendCustomCommand` jest sprawdzany i logowany | Potwierdzone w kodzie; nietestowalne JVM. Brak stanu błędu w UI (świadomie poza zakresem). WARNING-level, bez wpływu na kryteria |
+| WR-04 | `withSession(session, nowMs)` uzbraja `STOP_COOLDOWN_MS`, gdy Running kończy się przed `endAtMs`, i nigdy nie skraca istniejącego cooldownu; naturalny koniec bez cooldownu | Potwierdzone, 3 nowe testy zielone. Odstępstwo od propozycji review (pochodna po stronie UI zamiast stanu `Stopping`) jest akceptowalne |
+| WR-05 | `startRequestedAtMs`, `startPending`, `shouldSendVolume`; ViewModel używa `shouldSendVolume(now())` | Potwierdzone, 3 testy zielone |
+| WR-06 | silnik ignoruje `start()` gdy sesja istnieje i nie jest w rampie stopu; UI blokuje drugie stuknięcie (`startPending`) | Potwierdzone, `aSecondStartWhileRunningIsIgnored` i `aStartDuringTheStopRampStillRestartsTheSession` zielone |
 
-Recommendation (non-blocking): close CR-01, WR-01, WR-02 and WR-03 in one small `/gsd-quick` or gap-closure pass. They are localized and cheap, and WR-02 and WR-01 are directly reproducible with a fake `AudioOutput` (IN-05). If the developer prefers, they can be deferred to Phase 3 (reliability). Phase 3's roadmap text covers interruptions (PLAY-07) but does not mention these specific defects, so they are not recorded as `deferred`.
+Pozostałe INFO (IN-01..IN-05) są nadal otwarte w 01-REVIEW-DISPOSITION.md i nie blokują. IN-05 (brak testów polityki po stronie usługi i ViewModelu) jest dokładnie powodem, dla którego CR-01 i WR-03 potrzebują kontroli na urządzeniu.
 
-## Overrides (suggestion only, requires the developer)
+## Overrides (tylko propozycja, wymaga developera)
 
-SC2's "2-3 physical phones" clause is unmet by documented user constraint (one phone available), and the rest of SC2 is evidenced. If the developer accepts this, add:
+Klauzula SC2 o "2-3 fizycznych telefonach" jest niespełniona z udokumentowanego powodu (dostępny był jeden telefon), reszta SC2 jest poparta dowodami. Jeśli developer to akceptuje, dodać do frontmattera:
 
 ```yaml
 overrides:
@@ -210,11 +215,11 @@ overrides:
     accepted_at: "{ISO timestamp}"
 ```
 
-I did not apply this override, because only the developer can accept it. Classification rationale: the loop-seam audibility question is device-specific (DAC, AudioFlinger, MIUI path), so one device is evidence for the approach but not for the breadth the roadmap asks for. It is therefore UNCERTAIN, not FAILED (the behaviour is observed to work) and not VERIFIED (the stated contract is not met).
+Nie zastosowałem override'u, bo może go zaakceptować tylko developer. Uzasadnienie klasyfikacji: słyszalność łączenia pętli zależy od urządzenia (DAC, AudioFlinger, ścieżka MIUI), więc jedno urządzenie jest dowodem dla podejścia, ale nie dla szerokości, o którą prosi roadmapa. Dlatego UNCERTAIN, a nie FAILED (zachowanie działa) ani VERIFIED (kontrakt niespełniony).
 
-## Gaps Summary
+## Podsumowanie
 
-No gaps. No truth is FAILED, no artifact is missing or stubbed, and no key link is unwired. The phase delivers a working vertical slice. `human_needed` reflects (1) the multi-device clause of SC2, (2) visual and Android 12+/13+ checks that only static evidence supports, (3) the flagged judgment-tier prohibition, and (4) open review findings the developer should triage (recommended: fix CR-01, WR-01..03 before Phase 2).
+Brak gapów. Żadna prawda nie jest FAILED, żaden artefakt nie jest brakujący ani stubem, żaden klucz połączenia nie jest rozłączony, a poprawki z review nie spowodowały regresji w kodzie ani w testach JVM. `human_needed` wynika z: (1) klauzuli wielu urządzeń w SC2, (2) kontroli wizualnych i Androida 12+/13+ z samym dowodem statycznym, (3) braku uruchomienia na urządzeniu poprawek CR-01/WR-01/WR-03 (nowy human item "regression smoke" i test obcego kontrolera), (4) oflagowanej prohibition typu judgment. Elementy 1-7 z poprzedniego raportu i z 01-UAT.md są zachowane; element 7 (decyzja o przypadkach brzegowych) zastąpiony przez dwa konkretne testy akceptacyjne poprawek i potwierdzenie rezydualne.
 
 ---
 
