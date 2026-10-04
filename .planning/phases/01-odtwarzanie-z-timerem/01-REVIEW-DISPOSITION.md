@@ -5,20 +5,20 @@ titles: json
 findings:
   - id: WR-01
     severity: warning
-    disposition: fixed
-    title: "A volume change during the Stop ramp breaks the fade-floor invariant and can end with an audible cut"
+    disposition: open
+    title: "Tile tap during the Stop cooldown is silently dropped, so the noise is not selected"
+  - id: IN-01
+    severity: info
+    disposition: open
+    title: "`previewAvailable` is now a pure alias of `startEnabled`"
+  - id: IN-02
+    severity: info
+    disposition: open
+    title: "Stop arms the full cooldown even if the session has already ended"
   - id: WR-02
     severity: warning
     disposition: fixed
     title: "Tile preview is not gated on the Start-in-flight window or the Stop cooldown, so it overlaps the session audio"
-  - id: IN-01
-    severity: info
-    disposition: open
-    title: "PlaybackClient drops a command silently when the client is released before the controller connects"
-  - id: IN-02
-    severity: info
-    disposition: open
-    title: "Artwork rendering failure is swallowed without any trace"
   - id: IN-03
     severity: info
     disposition: open
@@ -47,21 +47,21 @@ findings:
     severity: warning
     disposition: fixed
     title: "Double tap on Start restarts the session mid-fade"
-open: 4
+open: 5
 total: 11
-recorded: 2026-10-04T13:48:18.776Z
+recorded: 2026-10-04T14:22:06.801Z
 ---
 
 # Phase 01: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | fixed | 01-REVIEW-FIX.md |
-| WR-02 | warning | fixed | 01-REVIEW-FIX.md |
+| WR-01 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
-| IN-03 | info | open | - |
-| IN-04 | info | open | - |
+| WR-02 | warning | fixed | 01-REVIEW-FIX.md (not in the current review) |
+| IN-03 | info | open | - (not in the current review) |
+| IN-04 | info | open | - (not in the current review) |
 | CR-01 | critical | fixed | 01-REVIEW-FIX.md (not in the current review) |
 | WR-03 | warning | fixed | 01-REVIEW-FIX.md (not in the current review) |
 | WR-04 | warning | fixed | 01-REVIEW-FIX.md (not in the current review) |
