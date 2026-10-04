@@ -1,24 +1,73 @@
 ---
-phase: 01-odtwarzanie-z-timerem
-source: 01-REVIEW.md
-updated: 2026-10-04
+phase: 01
+review: 01-REVIEW.md
+titles: json
+findings:
+  - id: WR-01
+    severity: warning
+    disposition: open
+    title: "A volume change during the Stop ramp breaks the fade-floor invariant and can end with an audible cut"
+  - id: WR-02
+    severity: warning
+    disposition: open
+    title: "Tile preview is not gated on the Start-in-flight window or the Stop cooldown, so it overlaps the session audio"
+  - id: IN-01
+    severity: info
+    disposition: open
+    title: "PlaybackClient drops a command silently when the client is released before the controller connects"
+  - id: IN-02
+    severity: info
+    disposition: open
+    title: "Artwork rendering failure is swallowed without any trace"
+  - id: IN-03
+    severity: info
+    disposition: open
+    title: "`MAX_EXTEND_MS` duplicates `EXTEND_STEP_MS`"
+  - id: IN-04
+    severity: info
+    disposition: open
+    title: "controller-probe verifies only client-side gating, and has minor robustness gaps"
+  - id: CR-01
+    severity: critical
+    disposition: fixed
+    title: "D-14 \"locked player\" is an incomplete denylist on an exported session"
+  - id: WR-03
+    severity: warning
+    disposition: fixed
+    title: "A failed `MediaController` connection silently drops every later command"
+  - id: WR-04
+    severity: warning
+    disposition: fixed
+    title: "Engine-initiated stops bypass the Start cooldown"
+  - id: WR-05
+    severity: warning
+    disposition: fixed
+    title: "Volume changes between Start and Running are lost"
+  - id: WR-06
+    severity: warning
+    disposition: fixed
+    title: "Double tap on Start restarts the session mid-fade"
+open: 6
+total: 11
+recorded: 2026-10-04T13:32:54.944Z
 ---
 
-# Phase 01 — Code Review Disposition
+# Phase 01: Code Review Disposition
 
-One row per finding in 01-REVIEW.md. Default disposition is `open` until triaged.
+| Finding | Severity | Disposition | Source |
+|---------|----------|-------------|--------|
+| WR-01 | warning | open | - |
+| WR-02 | warning | open | - |
+| IN-01 | info | open | - |
+| IN-02 | info | open | - |
+| IN-03 | info | open | - |
+| IN-04 | info | open | - |
+| CR-01 | critical | fixed | 01-REVIEW-FIX.md (not in the current review) |
+| WR-03 | warning | fixed | 01-REVIEW-FIX.md (not in the current review) |
+| WR-04 | warning | fixed | 01-REVIEW-FIX.md (not in the current review) |
+| WR-05 | warning | fixed | 01-REVIEW-FIX.md (not in the current review) |
+| WR-06 | warning | fixed | 01-REVIEW-FIX.md (not in the current review) |
 
-| ID | Severity | Title | Disposition | Note |
-|----|----------|-------|-------------|------|
-| CR-01 | critical | D-14 locked player is a denylist on an exported session | fixed | c7f4d49 — allowlist + uid check; needs on-device check (UAT) |
-| WR-01 | warning | Service destruction leaves sessionState stuck at Running | fixed | f4ca98f, 0186906 |
-| WR-02 | warning | start() publishes Running after startLoop; sync focus denial swallowed | fixed | 0186906 |
-| WR-03 | warning | Failed MediaController connection drops later commands incl. Stop | fixed | 58d9e92 — reconnect once; failures logged only |
-| WR-04 | warning | Engine-initiated stops bypass Start cooldown; restart hard-cuts audio | fixed | a1e9ebd — cooldown derived in PlayerUiState |
-| WR-05 | warning | Volume changes before Running arrives are lost | fixed | a1e9ebd |
-| WR-06 | warning | Double tap on Start restarts session mid-fade | fixed | 0186906, a1e9ebd |
-| IN-01 | info | Transient audio-focus loss ends whole session | open | Phase-1 user decision; PLAY-07 (Phase 3) |
-| IN-02 | info | Comment/constant duplication | open | |
-| IN-03 | info | Launcher icon is a 108 dp vector used as plain icon | open | |
-| IN-04 | info | seam_ok in asset verifier cannot catch a real loop seam | open | |
-| IN-05 | info | Service-side policy and ViewModel have no tests | open | |
+Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
+Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.
+Re-running the gate keeps every row it can. A row the current review no longer reports is kept and its Source cell flagged, so a finding does not leave this record silently. ONE exception: when a finding id is REUSED by a different finding, the earlier decision cannot keep a row — the id is taken — and it is dropped. A RECORDED decision (anything but `open`) is named on the console when that happens; a row still at `open` is replaced silently, because `open` records no decision to lose.
