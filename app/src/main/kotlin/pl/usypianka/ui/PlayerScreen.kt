@@ -97,17 +97,32 @@ fun PlayerScreen(viewModel: PlayerViewModel) {
         viewModel.onStartClicked()
     }
 
+    var showCustomDialog by rememberSaveable { mutableStateOf(false) }
+
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         PlayerContent(
             state = state,
             nowMs = nowMs,
             onNoiseSelected = viewModel::onNoiseSelected,
             onPresetSelected = viewModel::onPresetSelected,
-            onCustomClicked = { },
+            onCustomClicked = { showCustomDialog = true },
             onVolumeChanged = viewModel::onVolumeChanged,
             onStart = onStart,
             onStop = viewModel::onStopClicked,
             onExtend = viewModel::onExtendClicked,
+        )
+    }
+
+    // Closed automatically when a session starts, because the time is locked while playing (D-02).
+    if (showCustomDialog && state.selectionEnabled) {
+        TimePickerDialog(
+            initial = splitDuration(state.durationMs),
+            validate = { h, m -> state.applyCustomDuration(h, m) },
+            onConfirm = { h, m ->
+                viewModel.onCustomDuration(h, m)
+                showCustomDialog = false
+            },
+            onDismiss = { showCustomDialog = false },
         )
     }
 }
@@ -166,6 +181,12 @@ private fun PlayerContent(
                 label = { Text(stringResource(R.string.chip_custom)) },
             )
         }
+        // "Plays for 2 hours 30 minutes": Polish "przez" takes the accusative (D-18).
+        Text(
+            stringResource(R.string.plays_for, durationText(splitDuration(state.durationMs), accusative = true)),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
         SectionTitle(R.string.section_volume)
         VolumeControl(volume = state.volume, onVolumeChanged = onVolumeChanged)

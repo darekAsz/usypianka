@@ -17,4 +17,31 @@
     <string name="chip_minutes">%d min</string>
     <string name="chip_custom">Other</string>
     <string name="countdown_label">Time remaining</string>
+    <string name="custom_time_title">Custom time</string>
+    <string name="custom_time_hours">Hours</string>
+    <string name="custom_time_minutes">Minutes</string>
+    <string name="custom_time_error_too_short">Minimum is 1 minute</string>
+    <string name="custom_time_error_too_long">Maximum is 8 hours</string>
+    <string name="custom_time_error_minutes">Minutes must be 0–59</string>
+    <string name="custom_time_error_number">Digits only</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="plays_for">Plays for %1$s</string>
+    <string name="duration_hours_minutes">%1$s %2$s</string>
+    <plurals name="duration_hours">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
+    <plurals name="duration_hours_acc">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
+    <plurals name="duration_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <plurals name="duration_minutes_acc">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
 </resources>
