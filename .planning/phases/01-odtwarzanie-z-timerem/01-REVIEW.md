@@ -2,132 +2,91 @@
 phase: 01-odtwarzanie-z-timerem
 reviewed: 2026-10-04T00:00:00Z
 depth: standard
-files_reviewed: 18
+files_reviewed: 5
 files_reviewed_list:
-  - app/src/main/kotlin/pl/usypianka/domain/Gain.kt
   - app/src/main/kotlin/pl/usypianka/domain/SessionEngine.kt
-  - app/src/main/kotlin/pl/usypianka/playback/PlaybackClient.kt
-  - app/src/main/kotlin/pl/usypianka/playback/PlaybackService.kt
-  - app/src/main/kotlin/pl/usypianka/playback/PreviewPlayer.kt
-  - app/src/main/kotlin/pl/usypianka/ui/PlayerScreen.kt
   - app/src/main/kotlin/pl/usypianka/ui/PlayerUiState.kt
   - app/src/main/kotlin/pl/usypianka/ui/PlayerViewModel.kt
-  - app/src/main/res/values-pl/strings.xml
-  - app/src/main/res/values/strings.xml
   - app/src/test/kotlin/pl/usypianka/domain/SessionEngineTest.kt
-  - app/src/test/kotlin/pl/usypianka/domain/SessionTimelineTest.kt
   - app/src/test/kotlin/pl/usypianka/ui/PlayerUiStateTest.kt
-  - tools/controller-probe/build.gradle.kts
-  - tools/controller-probe/gradle.properties
-  - tools/controller-probe/settings.gradle.kts
-  - tools/controller-probe/src/main/AndroidManifest.xml
-  - tools/controller-probe/src/main/kotlin/pl/usypianka/probe/ProbeActivity.kt
 findings:
   critical: 0
-  warning: 2
-  info: 4
-  total: 6
+  warning: 1
+  info: 2
+  total: 3
 status: issues_found
 ---
 
-# Phase 1: Code Review Report (incremental, diff base f2a1c41)
+# Phase 1: Code Review Report (re-review after fixes 860f280, cd12f18)
 
-**Reviewed:** 2026-10-04T00:00:00Z
+**Reviewed:** 2026-10-04
 **Depth:** standard
-**Files Reviewed:** 18
+**Files Reviewed:** 5
 **Status:** issues_found
 
 ## Summary
 
-Reviewed the changes made by gap-closure plans 01-08/09/10: absolute fade floor (`FADE_FLOOR_DB`, `endSpanDb`), the 2.5 s Stop ramp, `stopAndThen` / `onTaskRemoved` (D-19), moon artwork in `MediaMetadata`, the "+1 min" `ExtendStep`, preview that follows the slider, and the standalone `controller-probe` UAT app.
+This is an incremental re-review of the two fix commits (WR-01 and WR-02 of the previous review). I also re-read the five files as a whole, with `Gain.kt` (`SessionTimeline`), `PlaybackService.kt` (the ACTION_VOLUME handler) and `PlayerScreen.kt` as context.
 
-The new timeline math holds up. I traced these cases by hand against the code and the tests:
-- a 0 % slider (-Infinity dB) never produces NaN;
-- a Stop during the fade-in never rises;
-- an extension inside the final fade is continuous;
-- a natural end that falls inside a stop ramp is covered by the `minOf` in `offsetDb`;
-- `stopAndThen` is idempotent, is cancelled by a new `start`/`release`, and does not restart a running ramp.
+**WR-01 fix (`SessionEngine.setVolume` returns early while `stopping`): correct.**
+- `stopping` is set in `stop()` and cleared in `start()`, `finish()` and `release()`. Nothing else can leave it stuck.
+- A restart during the ramp goes through `start()`, which sets `sliderPos` itself, so the ignored value is never needed.
+- The fade-floor invariant holds. `beginStop` fixes `stopToDb` from the slider level at Stop time, and that level is now unchanged until `finish()`.
+- The new test is sound. At the default slider (-26 dB) the last non-zero tick is at 62_480 ms, about -44.85 dBFS, which is within the 0.6 dB tolerance. The step per 20 ms tick is about 0.15 dB, which is under the 0.6 dB bound.
 
-No security or crash defects found. The CR-01 allowlist (`isOwnApp` by uid, `LOCKED_PLAYER_COMMANDS`) is sound.
+**WR-02 fix (`previewAvailable(nowMs)` delegates to `startEnabled`): the gating is correct, but it introduced one behaviour regression (WR-01 below).** The preview no longer overlaps the session audio in the Start-in-flight window or the Stop cooldown. However, the same gate now also swallows the noise selection (see below).
 
-Two real robustness gaps remain:
-1. The engine accepts volume changes during the Stop ramp, which breaks the "ramp ends at the floor" invariant.
-2. The tile preview is not gated on the Start/Stop transition windows.
-
-The rest are minor.
+No security issues. No hardcoded secrets or unsafe input handling in the changed code.
 
 ## Warnings
 
-### WR-01: A volume change during the Stop ramp breaks the fade-floor invariant and can end with an audible cut
+### WR-01: Tile tap during the Stop cooldown is silently dropped, so the noise is not selected
 
-**File:** `app/src/main/kotlin/pl/usypianka/domain/SessionEngine.kt:88-91` (with `Gain.kt:80-86`)
-**Issue:** `beginStop` freezes `stopToDb` relative to the slider level at the moment of Stop (`-endSpanDb(baseDb)`). `SessionEngine.setVolume` has no guard for `stopping`. It overwrites `sliderPos` and calls `apply(tl, now)`, which recomputes `base + offset` with the new base but the old offset.
+**File:** `app/src/main/kotlin/pl/usypianka/ui/PlayerViewModel.kt:48-56` (cause: `PlayerUiState.kt:76`, `PlayerScreen.kt:163`)
+**Issue:** `onNoiseSelected` now has a single early return, `if (!s.previewAvailable(now())) return`. That guard covers two different things: playing the preview and selecting the noise.
+- Before cd12f18 the guard was `!isRunning`, which matched `selectionEnabled`, the flag that drives the tile `enabled` state in `PlayerScreen`.
+- Now `previewAvailable` also turns false for 2.5 s after Stop (and 1.5 s after Start while Running has not arrived). During the Stop cooldown `isRunning` is false, so the tiles look enabled and tappable. A tap does nothing: no selection, no preview, no feedback.
+- Typical case: the parent presses Stop, immediately taps another noise for the next night or session, and the tap is lost. The selected tile stays on the old noise, which is a dropped input that looks like a bug.
 
-Example: the default slider is -26 dB and Stop is pressed, so the ramp runs 0 to -19 dB (-26 to -45 dBFS). If the slider is moved to 100 % at the halfway point, the level jumps to 0 + (-9.5) = -9.5 dBFS and the ramp ends at -19 dBFS. `finish()` then mutes from -19 dBFS, which is an audible cut. This is exactly what the absolute floor from G-01-2b was meant to prevent.
+The fix should have gated only the preview. The selection should still go through whenever no session is running.
 
-The case is reachable without a malicious controller:
-- `shouldSendVolume` keeps forwarding volume while `startPending` (1.5 s after Start). An engine-initiated stop (focus loss, noisy, error) inside that window leaves the engine ramping while the UI still sends `ACTION_VOLUME`.
-- `ACTION_VOLUME` messages already queued over IPC when the user presses Stop are processed after `stop()`.
-
-No test covers `setVolume` while stopping.
-**Fix:** Ignore volume changes once the ramp is running:
+**Fix:**
 ```kotlin
-fun setVolume(volume: Float) {                    // immediate (D-07)
-    if (stopping) return                          // the Stop ramp was planned for the slider level at Stop time
-    sliderPos = volume
-    timeline?.let { apply(it, now()) }
+fun onNoiseSelected(noise: Noise) {
+    val s = _state.value
+    if (s.isRunning) return                       // D-02: locked while a session runs
+    val t = now()
+    if (s.startPending(t)) return                 // the session is about to start with the old noise
+    if (!s.previewAvailable(t)) {                 // Stop cooldown: select, but do not preview
+        _state.update { it.selectNoise(noise) }
+        return
+    }
+    if (previewHolder.isInitialized() && preview.playingNoise.value == noise) {
+        preview.stop()
+        return
+    }
+    _state.update { it.selectNoise(noise) }
+    preview.play(noise, s.volume)
 }
 ```
-Or, more robustly, store the Stop ramp as absolute levels (`from/to` in dBFS) so the offset becomes `level(t) - currentBase`. Add a test: `start`, `stop`, `setVolume(1f)` halfway, then assert that the last non-zero volume before `stoppedAt` is about `FADE_FLOOR_DB`.
-
-### WR-02: Tile preview is not gated on the Start-in-flight window or the Stop cooldown, so it overlaps the session audio
-
-**File:** `app/src/main/kotlin/pl/usypianka/ui/PlayerUiState.kt:73`, `app/src/main/kotlin/pl/usypianka/ui/PlayerViewModel.kt:48-57`
-**Issue:** `previewAvailable = !isRunning`. After Stop the state is `Idle` at once (D-13), but the service is still ramping down for 2.5 s. During `startPending` (up to 1.5 s) the state is also not yet `Running`. In both windows `onNoiseSelected` passes the guard, changes `selectedNoise`, and `preview.play()` starts a second ExoPlayer at exactly the slider level. That level is now unreduced after the G-01-7 change.
-
-Consequences:
-- During a Stop, a loud preview plays on top of the fading session. The gentle ramp is defeated and the noise gets about 3 dB louder.
-- During a Start, the preview runs for up to 3 s over the session's fade-in. `selectedNoise` may then no longer match the noise the session was started with (`onStartClicked` captured the old `s.selectedNoise`).
-
-`startEnabled` already encodes both windows. The preview guard just does not use it.
-**Fix:** Gate the preview on the same condition as Start:
-```kotlin
-fun previewAvailable(nowMs: Long): Boolean = !isRunning && !startPending(nowMs) && nowMs >= startCooldownUntilMs
-```
-Then call it as `if (!s.previewAvailable(now())) return` in `onNoiseSelected`. Alternatively, call `stopPreview()` and ignore taps while `!startEnabled(now())`. Add a `PlayerUiStateTest` for it.
+Alternatively, move the decision into `PlayerUiState` with two explicit predicates (`canSelectNoise(nowMs)` and `previewAvailable(nowMs)`), and disable the tiles in `PlayerScreen` while a preview is not allowed, so the UI does not look interactive when it is not. Add a ViewModel or state test that a tap in the cooldown still changes `selectedNoise` without starting a preview.
 
 ## Info
 
-### IN-01: PlaybackClient drops a command silently when the client is released before the controller connects
+### IN-01: `previewAvailable` is now a pure alias of `startEnabled`
 
-**File:** `app/src/main/kotlin/pl/usypianka/playback/PlaybackClient.kt:72`
-**Issue:** `if (future !== pending) return@addListener` returns without logging. A Start or Stop issued right before `onStop` (`release()`) is lost: the UI shows "pending" for 1.5 s and then Start re-enables, with no sound. The window is small, because the connection is made in `onStart`, but this is the bedtime-critical path.
-**Fix:** At least `Log.w(TAG, "$action dropped: client released")`. Optionally, defer `release()` in `MainActivity.onStop` until pending commands have completed.
+**File:** `app/src/main/kotlin/pl/usypianka/ui/PlayerUiState.kt:72-78`
+**Issue:** The two predicates are identical. Any future change to one (for example, a Start-only precondition) will silently change the preview gating too. The alias also hides the distinction that WR-01 above depends on (selecting a noise versus previewing it).
+**Fix:** Keep the alias only if the doc comment states that the coupling is intentional. Better, express both predicates through a shared private `isQuiet(nowMs)` and add `canSelectNoise` for the selection rule (see WR-01).
 
-### IN-02: Artwork rendering failure is swallowed without any trace
+### IN-02: Stop arms the full cooldown even if the session has already ended
 
-**File:** `app/src/main/kotlin/pl/usypianka/playback/PlaybackService.kt:160-175`
-**Issue:** `runCatching { ... }.getOrNull()` hides every error, such as `Resources.NotFoundException`, a failed compress, or OOM. `lazy` then caches `null` for the life of the service, so a failure on MIUI would be undiagnosable.
-**Fix:** `.onFailure { Log.w(TAG, "artwork render failed", it) }.getOrNull()`.
-
-### IN-03: `MAX_EXTEND_MS` duplicates `EXTEND_STEP_MS`
-
-**File:** `app/src/main/kotlin/pl/usypianka/playback/PlaybackService.kt:52`, `app/src/main/kotlin/pl/usypianka/ui/PlayerUiState.kt:39`
-**Issue:** Both are 300_000 and are kept in sync only by `everyExtensionStepIsAcceptedByTheService`. This is acceptable, but any new `ExtendStep` larger than 5 min is rejected by the service with only a `Log.w` on the client side.
-**Fix:** Keep the test, and consider deriving `MAX_EXTEND_MS` from `ExtendStep.entries.maxOf { it.ms }` or documenting it as the single source.
-
-### IN-04: controller-probe verifies only client-side gating, and has minor robustness gaps
-
-**File:** `tools/controller-probe/src/main/kotlin/pl/usypianka/probe/ProbeActivity.kt:86-90`
-**Issue:**
-- `MediaController.sendCustomCommand` returns `ERROR_PERMISSION_DENIED` locally when the command is not in `availableSessionCommands`. The probe's "custom STOP denied" check therefore never reaches the service-side `isOwnApp` check in `onCustomCommand`. The comment "the session rejects them server-side" is not exercised for custom commands. The check still proves that the grant is empty.
-- `stop.get()` can throw `ExecutionException` inside the listener, which would crash the probe instead of reporting FAIL.
-- The private `finish(c, before)` overloads `Activity.finish()`, which is confusing.
-
-**Fix:** Wrap `get()` in `runCatching`, rename it to `report(...)`, and note the limitation in the KDoc.
+**File:** `app/src/main/kotlin/pl/usypianka/ui/PlayerViewModel.kt:99-102`
+**Issue:** `onStopClicked` always calls `onStopRequested`, which sets `startCooldownUntilMs = now + 2.5 s`. If the session ended naturally in the instant before the tap, there is no ramp to wait for, and Start and the preview are blocked for 2.5 s for no reason. Since WR-02 this cooldown blocks the preview and the noise selection as well. Probability is very low and the effect is harmless.
+**Fix:** Optional. Arm the cooldown only when `_state.value.isRunning` at the moment of the tap.
 
 ---
 
-_Reviewed: 2026-10-04T00:00:00Z_
+_Reviewed: 2026-10-04_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
