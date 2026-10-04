@@ -31,6 +31,7 @@ import pl.usypianka.domain.AudioOutput
 import pl.usypianka.domain.DurationSpec
 import pl.usypianka.domain.Noise
 import pl.usypianka.domain.SessionEngine
+import pl.usypianka.domain.SessionState
 
 object PlaybackCommands {
     const val ACTION_START = "pl.usypianka.START"
@@ -68,10 +69,14 @@ class PlaybackService : MediaSessionService() {
             .apply { repeatMode = Player.REPEAT_MODE_ONE }
         AudioDiagnostics.attach(exo)
 
+        // WR-01: the state lives in the process-wide container; a previous service instance may have died without
+        // resetting it, so a fresh service always starts from Idle.
+        val sessionState = (application as UsypiankaApp).container.sessionState
+        sessionState.value = SessionState.Idle
         val sessionEngine = SessionEngine(
             ExoAudioOutput(exo, ::titleFor),
             scope,
-            (application as UsypiankaApp).container.sessionState,
+            sessionState,
             SystemClock::elapsedRealtime,
         )
         engine = sessionEngine
@@ -114,6 +119,7 @@ class PlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         scope.cancel()
+        engine?.release()                              // WR-01: never leave the shared state on Running
         session?.run {
             player.release()
             release()
