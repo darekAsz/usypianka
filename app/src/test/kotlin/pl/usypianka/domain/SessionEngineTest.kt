@@ -20,10 +20,12 @@ class FakeOutput(private val clock: () -> Long) : AudioOutput {
     val loops = mutableListOf<Pair<Long, String>>()
     val events = mutableListOf<String>()
     var stoppedAt: Long? = null
+    var onStartLoop: (() -> Unit)? = null       // lets a test play the part of a synchronous focus denial
 
     override fun startLoop(assetPath: String) {
         loops += clock() to assetPath
         events += "loop:$assetPath"
+        onStartLoop?.invoke()
     }
 
     override fun setVolume(amplitude: Float) {
@@ -148,6 +150,66 @@ class SessionEngineTest {
         r.engine.start(Noise.BROWN, 28_800_000, slider)
         advanceTo(28_800_000)
         assertEquals(28_800_000L, r.out.stoppedAt)
+        assertEquals(SessionState.Idle, r.state.value)
+    }
+
+    @Test
+    fun aStopRaisedSynchronouslyInsideStartLoopIsNotSwallowed() = runTest {      // WR-02
+        val r = Rig(this)
+        r.out.onStartLoop = { r.engine.stop() }          // e.g. audio focus denied while the phone is ringing
+        r.engine.start(Noise.PINK, 900_000, slider)
+        runCurrent()
+
+        assertEquals(SessionState.Idle, r.state.value)
+
+        advanceTo(2_600)
+        assertNotNull(r.out.stoppedAt)
+        assertEquals(0f, r.out.lastVolume(), 0f)
+    }
+
+    @Test
+    fun aSecondStartWhileRunningIsIgnored() = runTest {                          // WR-06
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, slider)
+        advanceTo(1_000)
+
+        r.engine.start(Noise.WHITE, 60_000, slider)
+        runCurrent()
+
+        assertEquals(1, r.out.loops.size)
+        assertEquals(SessionState.Running(Noise.PINK, 900_000), r.state.value)
+        assertNull(r.out.stoppedAt)
+    }
+
+    @Test
+    fun aStartDuringTheStopRampStillRestartsTheSession() = runTest {
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, slider)
+        advanceTo(60_000)
+        r.engine.stop()
+        advanceTo(61_000)
+
+        r.engine.start(Noise.BROWN, 600_000, slider)
+        runCurrent()
+
+        assertEquals(2, r.out.loops.size)
+        assertEquals(SessionState.Running(Noise.BROWN, 661_000), r.state.value)
+    }
+
+    @Test
+    fun releaseResetsTheSharedStateAndCancelsTheTicker() = runTest {              // WR-01
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, slider)
+        advanceTo(60_000)
+
+        r.engine.release()
+        assertEquals(SessionState.Idle, r.state.value)
+
+        val before = r.out.events.size
+        advanceTo(120_000)
+        assertEquals(before, r.out.events.size)
+
+        r.engine.stop()                                   // a stale Stop must stay harmless
         assertEquals(SessionState.Idle, r.state.value)
     }
 }

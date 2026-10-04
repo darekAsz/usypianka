@@ -39,17 +39,20 @@ class SessionEngine(
     private var stopping = false
 
     fun start(noise: Noise, durationMs: Long, volume: Float, assetPath: String = noise.assetPath) {
-        if (timeline != null) {                       // restart during a stop ramp
-            ticker?.cancel(); output.setVolume(0f); output.stopAndRelease()
+        if (timeline != null) {
+            if (!stopping) return                     // WR-06: already running, a duplicate Start must not cut the audio
+            ticker?.cancel(); output.setVolume(0f); output.stopAndRelease()   // restart during a stop ramp
         }
         val t0 = now()
         stopping = false
         sliderPos = volume
         val tl = SessionTimeline(t0, t0 + durationMs, fadeInMs, fadeOutMs)
         timeline = tl
+        // WR-02: publish Running before the output starts, so a stop() raised synchronously from inside
+        // startLoop (focus denied, player error) finds a live session instead of being swallowed.
+        state.value = SessionState.Running(noise, tl.endMs)
         output.setVolume(0f)                          // never start audible
         output.startLoop(assetPath)
-        state.value = SessionState.Running(noise, tl.endMs)
         launchTicker()
     }
 
@@ -89,6 +92,14 @@ class SessionEngine(
                 delay(if (inFade) 20L else 500L)
             }
         }
+    }
+
+    /** Service teardown: forget the session and leave the shared state Idle so the UI can never be stuck on Running. */
+    fun release() {
+        ticker?.cancel()
+        timeline = null
+        stopping = false
+        state.value = SessionState.Idle
     }
 
     private fun finish() {
