@@ -88,6 +88,29 @@ class SessionEngineTest {
     }
 
     @Test
+    fun defaultSliderFinalFadeIsAudibleToTheLastSecondAndMutesAtZero() = runTest {      // G-01-2b
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 60_000, VolumeMap.DEFAULT)
+        advanceTo(53_000)
+        assertTrue("level ${db(r.out.lastVolume())}", db(r.out.lastVolume()) >= -35.0)
+
+        advanceTo(59_000)
+        assertTrue(r.out.lastVolume() > 0f)
+        assertTrue("level ${db(r.out.lastVolume())}", db(r.out.lastVolume()) > FADE_FLOOR_DB)
+
+        val window = r.out.volumes.filter { it.first in 50_000..59_999 }.map { db(it.second) }
+        assertTrue(window.size > 100)
+        window.zipWithNext().forEach { (a, b) ->
+            assertTrue("step ${abs(b - a)} dB", abs(b - a) <= tolDb)
+            assertTrue("level rose from $a to $b", b <= a + 1e-3)
+        }
+
+        advanceTo(60_000)
+        assertEquals(60_000L, r.out.stoppedAt)
+        assertEquals(0f, r.out.lastVolume(), 0f)
+    }
+
+    @Test
     fun extendInsideTheFinalFadeIsContinuousAndRecoversToFullLevel() = runTest {
         val r = Rig(this)
         r.engine.start(Noise.PINK, 900_000, slider)

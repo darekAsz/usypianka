@@ -9,47 +9,52 @@ class SessionTimelineTest {
 
     private val tol = 0.01
 
+    private val base = VolumeMap.sliderToDb(VolumeMap.DEFAULT)      // -26 dBFS, final fade spans 19 dB
+
     private fun timeline() = SessionTimeline(startMs = 0, endMs = 900_000)
 
     @Test
     fun fadeInIsLinearInDbFromMinusSixtyToZeroOverFiveSeconds() {
         val t = timeline()
-        assertEquals(-60.0, t.offsetDb(0), tol)
-        assertEquals(-30.0, t.offsetDb(2_500), tol)
-        assertEquals(0.0, t.offsetDb(5_000), tol)
+        assertEquals(-60.0, t.offsetDb(0, base), tol)
+        assertEquals(-30.0, t.offsetDb(2_500, base), tol)
+        assertEquals(0.0, t.offsetDb(5_000, base), tol)
+        assertEquals(-60.0, t.offsetDb(0, -5.0), tol)         // the fade-in does not depend on the slider
+        assertEquals(-30.0, t.offsetDb(2_500, -38.0), tol)
     }
 
     @Test
     fun fadeOutLiesInsideTheSetTimeAndFinishesExactlyAtTheEnd() {
         val t = timeline()
-        assertEquals(0.0, t.offsetDb(890_000), tol)
-        assertEquals(-30.0, t.offsetDb(895_000), tol)
-        assertEquals(-60.0, t.offsetDb(900_000), tol)
+        assertEquals(0.0, t.offsetDb(890_000, base), tol)
+        assertEquals(-9.5, t.offsetDb(895_000, base), tol)
+        assertEquals(-19.0, t.offsetDb(900_000, base), tol)
+        assertEquals(FADE_FLOOR_DB, base + t.offsetDb(900_000, base), tol)      // G-01-2b: ends at the absolute floor
         assertFalse(t.isFinished(899_999))
         assertTrue(t.isFinished(900_000))
     }
 
     @Test
     fun lateTickStillYieldsTheRightValue() {
-        assertEquals(-42.0, timeline().offsetDb(897_000), tol)
+        assertEquals(-13.3, timeline().offsetDb(897_000, base), tol)
     }
 
     @Test
     fun extendInsideTheFinalFadeIsContinuousAndRecoversAtTheFadeInSlope() {
         val t = timeline()
-        val before = t.offsetDb(896_000)
-        assertEquals(-36.0, before, tol)
-        t.extend(896_000, 300_000)
-        assertEquals(before, t.offsetDb(896_000), tol)
+        val before = t.offsetDb(896_000, base)
+        assertEquals(-11.4, before, tol)
+        t.extend(896_000, 300_000, base)
+        assertEquals(before, t.offsetDb(896_000, base), tol)
         assertEquals(1_200_000L, t.endMs)
-        assertEquals(0.0, t.offsetDb(899_000), tol)
+        assertEquals(0.0, t.offsetDb(899_000, base), tol)
     }
 
     @Test
     fun extendInTheBodyChangesOnlyTheEnd() {
         val t = timeline()
-        t.extend(100_000, 300_000)
-        assertEquals(0.0, t.offsetDb(100_000), tol)
+        t.extend(100_000, 300_000, base)
+        assertEquals(0.0, t.offsetDb(100_000, base), tol)
         assertEquals(1_200_000L, t.endMs)
         assertEquals(1_100_000L, t.remainingMs(100_000))
     }
@@ -57,8 +62,8 @@ class SessionTimelineTest {
     @Test
     fun beginStopRampsFromTheCurrentOffsetOverTheRampTime() {
         val t = timeline()
-        t.beginStop(100_000, 1_500)
-        assertEquals(-30.0, t.offsetDb(100_750), tol)
+        t.beginStop(100_000, base, 1_500)
+        assertEquals(-30.0, t.offsetDb(100_750, base), tol)
         assertFalse(t.isFinished(101_499))
         assertTrue(t.isFinished(101_500))
     }
