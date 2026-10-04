@@ -9,6 +9,7 @@ import pl.usypianka.domain.Noise
 import pl.usypianka.domain.STOP_RAMP_MS
 import pl.usypianka.domain.SessionState
 import pl.usypianka.domain.VolumeMap
+import pl.usypianka.playback.PlaybackCommands
 
 class PlayerUiStateTest {
 
@@ -271,6 +272,22 @@ class PlayerUiStateTest {
         assertEquals(300_000L, EXTEND_STEP_MS)
         assertEquals(2_500L, STOP_COOLDOWN_MS)
         assertEquals(STOP_RAMP_MS, STOP_COOLDOWN_MS)
+    }
+
+    // --- extension buttons (D-17, UAT G-01-2c) ---
+
+    @Test
+    fun extensionStepsAreOneAndFiveMinutes() {
+        assertEquals(listOf(60_000L, 300_000L), ExtendStep.entries.map { it.ms })
+        assertEquals(ExtendStep.ONE_MINUTE, ExtendStep.entries.first())   // left button first
+        assertEquals(EXTEND_STEP_MS, ExtendStep.FIVE_MINUTES.ms)
+    }
+
+    @Test
+    fun everyExtensionStepIsAcceptedByTheService() {
+        ExtendStep.entries.forEach { step ->
+            assertTrue("$step must lie in 1..MAX_EXTEND_MS", step.ms in 1L..PlaybackCommands.MAX_EXTEND_MS)
+        }
     }
 
     // --- splitDuration (plural formatting input) ---

@@ -2,6 +2,7 @@
 <resources>
     <string name="action_start">Start</string>
     <string name="action_stop">Stop</string>
+    <string name="action_extend_1">+1 min</string>
     <string name="action_extend">+5 min</string>
     <string name="notification_channel_name">Odtwarzanie</string>
     <string name="noise_white_name">Szum biały</string>

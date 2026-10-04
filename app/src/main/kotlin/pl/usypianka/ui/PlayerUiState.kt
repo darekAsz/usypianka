@@ -39,6 +39,12 @@ const val START_PENDING_MS = 1_500L
 const val EXTEND_STEP_MS = 300_000L
 
 /**
+ * The two extension buttons shown while playing (D-17; "+1 min" added by the user in UAT G-01-2c). There is no total
+ * cap, and both steps lie within the range the service accepts (1 ms .. PlaybackCommands.MAX_EXTEND_MS).
+ */
+enum class ExtendStep(val ms: Long) { ONE_MINUTE(60_000L), FIVE_MINUTES(EXTEND_STEP_MS) }
+
+/**
  * Immutable state of the player screen. Pure Kotlin so the screen stays a thin renderer.
  * Every launch starts from these defaults; nothing is persisted (D-09).
  */
