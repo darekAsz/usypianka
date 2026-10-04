@@ -86,6 +86,7 @@ class SessionEngine(
     }
 
     fun setVolume(volume: Float) {                    // immediate (D-07)
+        if (stopping) return                          // WR-01: the Stop ramp was planned for the slider level at Stop time
         sliderPos = volume
         timeline?.let { apply(it, now()) }
     }

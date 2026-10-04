@@ -229,6 +229,27 @@ class SessionEngineTest {
     }
 
     @Test
+    fun aVolumeChangeDuringTheStopRampIsIgnoredAndTheRampStillEndsAtTheFloor() = runTest {      // WR-01
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, VolumeMap.DEFAULT)
+        advanceTo(60_000)
+        r.engine.stop()
+        advanceTo(61_250)
+        val before = r.out.volumes.size
+
+        r.engine.setVolume(1f)                            // e.g. a queued ACTION_VOLUME arriving after Stop
+        assertEquals(before, r.out.volumes.size)          // no new output level, no jump
+
+        advanceTo(62_520)
+        assertNotNull(r.out.stoppedAt)
+        val ramp = r.out.volumes.filter { it.first in 60_000..62_500 && it.second > 0f }.map { db(it.second) }
+        assertEquals(FADE_FLOOR_DB, ramp.last(), tolDb)   // not -9.5 dBFS, i.e. no audible cut at the mute
+        ramp.zipWithNext().forEach { (a, b) ->
+            assertTrue("step ${abs(b - a)} dB inside the stop ramp", abs(b - a) <= 0.6)
+        }
+    }
+
+    @Test
     fun eightHourSessionEndsCleanly() = runTest {
         val r = Rig(this)
         r.engine.start(Noise.BROWN, 28_800_000, slider)
