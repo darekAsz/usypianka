@@ -5,7 +5,7 @@ titles: json
 findings:
   - id: WR-01
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Tile tap during the Stop cooldown is silently dropped, so the noise is not selected"
   - id: IN-01
     severity: info
@@ -47,16 +47,16 @@ findings:
     severity: warning
     disposition: fixed
     title: "Double tap on Start restarts the session mid-fade"
-open: 5
+open: 4
 total: 11
-recorded: 2026-10-04T14:22:06.801Z
+recorded: 2026-10-04T14:25:21.182Z
 ---
 
 # Phase 01: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | open | - |
+| WR-01 | warning | fixed | 01-REVIEW-FIX.md |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | WR-02 | warning | fixed | 01-REVIEW-FIX.md (not in the current review) |
