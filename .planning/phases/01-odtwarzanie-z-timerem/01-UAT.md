@@ -1,9 +1,9 @@
 ---
-status: partial
+status: diagnosed
 phase: 01-odtwarzanie-z-timerem
 source: [01-VERIFICATION.md]
 started: 2026-10-04T12:30:00Z
-updated: 2026-10-04T17:18:00Z
+updated: 2026-10-04T17:30:00Z
 ---
 
 ## Current Test
@@ -74,8 +74,14 @@ blocked: 1
   reason: "User reported: powiadomienie nie pokazuje ikony księżyca w punkcie 2"
   severity: minor
   test: 2
-  artifacts: []
-  missing: []
+  root_cause: "Small icon jest ustawiony poprawnie (DefaultMediaNotificationProvider.setSmallIcon(R.drawable.ic_stat_sleep)), ale MediaItem nie ma artworku (MediaMetadata bez artworkData/artworkUri). MIUI 12 / Android 11 renderuje powiadomienie MediaStyle własnym szablonem, który pokazuje okładkę i nazwę aplikacji, a small icon tylko w pasku stanu (często ukrywany przez MIUI). Bez okładki w powiadomieniu i na ekranie blokady nie ma żadnej grafiki. Diagnoza z kodu, nie potwierdzona dumpsys podczas sesji (brak aktywnej sesji w chwili diagnozy)."
+  artifacts:
+    - path: "app/src/main/kotlin/pl/usypianka/playback/PlaybackService.kt"
+      issue: "ExoAudioOutput.startLoop buduje MediaMetadata tylko z title, bez artworkData"
+  missing:
+    - "Dodać artwork księżyca (bitmapa z drawable, np. ic_launcher, jako PNG bytes) do MediaMetadata w ExoAudioOutput.startLoop (setArtworkData(..., PICTURE_TYPE_FRONT_COVER))"
+    - "Weryfikacja na Xiaomi: adb shell dumpsys notification --noredact podczas sesji + oględziny powiadomienia i ekranu blokady"
+  debug_session: ""
 
 - gap_id: G-01-2b
   truth: "Wyciszanie (dB-liniowe) jest słyszalne do samego końca sesji, bez wczesnego zaniku do ciszy"
@@ -83,8 +89,17 @@ blocked: 1
   reason: "User reported: test 2: wyciszanie działa za szybko, już gdy jest jeszcze 7 sekund to nic nie słychać"
   severity: major
   test: 2
-  artifacts: []
-  missing: []
+  root_cause: "SessionTimeline.outro schodzi liniowo o rangeDb=60 dB w fadeOutMs=10 s (6 dB/s) WZGLĘDEM poziomu suwaka, a suwak domyślnie (0.35) daje już -26 dBFS (VolumeMap.MIN_DB=-40). Przy 7 s do końca offset = -18 dB, więc poziom = -44 dBFS (amplituda ~0.006), co z głośnika telefonu jest niesłyszalne. Około 2/3 wyciszenia przypada na zakres poniżej progu słyszalności, a cisza zaczyna się kilka sekund przed 0:00."
+  artifacts:
+    - path: "app/src/main/kotlin/pl/usypianka/domain/Gain.kt"
+      issue: "SessionTimeline: fadeOutMs=10 s i stały rangeDb=60 dB względem suwaka; koniec fade daleko poniżej progu słyszalności"
+    - path: "app/src/main/kotlin/pl/usypianka/domain/SessionEngine.kt"
+      issue: "fadeOutMs=10_000 przekazywane do SessionTimeline; poziom = sliderDb + offsetDb"
+  missing:
+    - "Wyciszanie ma kończyć się na progu słyszalności w chwili 0:00: zakres fade liczony od poziomu suwaka do absolutnego dolnego progu (np. ok. -50..-55 dBFS) zamiast stałych 60 dB, ewentualnie dłuższy fadeOut; dopiero na 0:00 przejście do -80/mute"
+    - "Testy JVM SessionTimeline/SessionEngine: poziom przy remaining=1 s nadal powyżej progu dla domyślnego i niskiego suwaka; na 0:00 mute"
+    - "Sprawdzenie na Xiaomi: sesja 1 min, dźwięk słyszalny do ok. 0:01"
+  debug_session: ""
 
 - gap_id: G-01-2c
   truth: "Podczas sesji obok przycisku +5 min jest też przycisk +1 min, który wydłuża sesję o minutę"
@@ -93,17 +108,37 @@ blocked: 1
   severity: minor
   kind: enhancement
   test: 2
-  artifacts: []
-  missing: []
+  root_cause: "Funkcja nie istnieje: UI ma jeden przycisk przedłużenia ze stałym EXTEND_STEP_MS=300_000; serwis już akceptuje dowolne addMs w 1..MAX_EXTEND_MS, więc zmiana jest tylko po stronie UI."
+  artifacts:
+    - path: "app/src/main/kotlin/pl/usypianka/ui/PlayerUiState.kt"
+      issue: "tylko EXTEND_STEP_MS = 300_000L"
+    - path: "app/src/main/kotlin/pl/usypianka/ui/PlayerViewModel.kt"
+      issue: "onExtendClicked() bez parametru kroku"
+    - path: "app/src/main/kotlin/pl/usypianka/ui/PlayerScreen.kt"
+      issue: "jeden przycisk action_extend"
+    - path: "app/src/main/res/values/strings.xml, app/src/main/res/values-pl/strings.xml"
+      issue: "brak stringa +1 min"
+  missing:
+    - "Dodać krok 60_000 ms, parametr kroku w onExtendClicked, drugi przycisk +1 min obok +5 min, string action_extend_1 (PL/EN)"
+    - "Test jednostkowy ViewModelu/klienta dla przedłużenia o 1 min"
+  debug_session: ""
 
 - gap_id: G-01-2d
   truth: "Przesunięcie aplikacji z listy ostatnich aplikacji (onTaskRemoved) w trakcie sesji zatrzymuje szum i kończy sesję; po ponownym uruchomieniu UI startuje w Idle"
   status: failed
   reason: "User reported: test 2: zabicie aplikacji nie zatrzymuje szumu. Doprecyzowanie: Przesunięcie z listy ostatnich aplikacji - też powinno zatrzymywać"
   severity: major
+  kind: decision-change
   test: 2
-  artifacts: []
-  missing: []
+  root_cause: "PlaybackService celowo nie nadpisuje onTaskRemoved (komentarz w linii 120): domyślne zachowanie Media3 MediaSessionService utrzymuje usługę i odtwarzanie, gdy gracz gra. Użytkownik zdecydował, że przesunięcie z ostatnich ma kończyć sesję."
+  artifacts:
+    - path: "app/src/main/kotlin/pl/usypianka/playback/PlaybackService.kt"
+      issue: "brak override onTaskRemoved; komentarz dokumentuje stare zachowanie"
+  missing:
+    - "Nadpisać onTaskRemoved: engine.stop() (krótki ramp, bez trzasku), po zakończeniu rampy / natychmiast pauseAllPlayersAndStopSelf() lub stopSelf(); stan sesji Idle"
+    - "Zaktualizować komentarz i zapisać decyzję w 01-CONTEXT.md (nowa decyzja: swipe z ostatnich kończy sesję)"
+    - "Sprawdzenie na Xiaomi: sesja gra, swipe z ostatnich -> szum cichnie, powiadomienie znika, ponowne otwarcie = Idle"
+  debug_session: ""
 
 - gap_id: G-01-7
   truth: "Podgląd po stuknięciu kafelka gra z tą samą głośnością co ustawiona na suwaku (zmiana decyzji D-05, która zakładała cichszy podgląd)"
@@ -112,5 +147,13 @@ blocked: 1
   severity: minor
   kind: decision-change
   test: 7
-  artifacts: []
-  missing: []
+  root_cause: "PreviewPlayer.play ustawia levelDb = VolumeMap.sliderToDb(sliderPosition) - 10.0 zgodnie z D-05 (podgląd cichszy od suwaka)."
+  artifacts:
+    - path: "app/src/main/kotlin/pl/usypianka/playback/PreviewPlayer.kt"
+      issue: "odejmowanie 10 dB od poziomu suwaka; KDoc mówi '10 dB below the slider level'"
+    - path: ".planning/phases/01-odtwarzanie-z-timerem/01-CONTEXT.md"
+      issue: "D-05 i notatka o głośności podglądu opisują cichszy podgląd"
+  missing:
+    - "Usunąć -10 dB (levelDb = sliderToDb(sliderPosition)), zaktualizować KDoc i ewentualne testy"
+    - "Zaktualizować D-05 w 01-CONTEXT.md: podgląd gra z poziomem suwaka"
+  debug_session: ""
