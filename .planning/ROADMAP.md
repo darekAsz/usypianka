@@ -12,7 +12,7 @@ Droga od pustego katalogu do aplikacji w Google Play prowadzi pionowymi wycinkam
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Odtwarzanie z timerem** - Wybór szumu, czas, fade-in, pętla bez przerw, łagodne wygaszenie na końcu; ciemny UI, PL/EN
+- [x] **Phase 1: Odtwarzanie z timerem** - Wybór szumu, czas, fade-in, pętla bez przerw, łagodne wygaszenie na końcu; ciemny UI, PL/EN (completed 2026-10-04)
 - [ ] **Phase 2: Poziom dB i tryby wyciszania** - Suwak w dB(A) ze strefami i limitem, tryby „tempo” i „start → koniec”, wykres, sterowanie z powiadomienia
 - [ ] **Phase 3: Noc bez przerw i test w Google Play** - 8 h bez ładowarki na Xiaomi/Samsung, przerwania audio, ekran „Niezawodność”, wersja offline w zamkniętym teście
 - [ ] **Phase 4: Miernik dB i kalibracja mikrofonem** - Pomiar dB(A) na żywo (także w tle), kalibracja, offset, ostrzeżenie o nieaktualnej kalibracji
@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Podczas odtwarzania aplikacja pokazuje odliczanie pozostałego czasu; po zablokowaniu ekranu dźwięk gra dalej, a po upływie czasu wycisza się przez kilka sekund do ciszy i odtwarzanie kończy się samo, bez nagłego urwania
   4. Cała aplikacja ma ciemny interfejs bez białego błysku przy starcie i wyświetla się po polsku lub angielsku zgodnie z językiem telefonu, z poprawną odmianą liczebników („1 minuta / 2 minuty / 5 minut”)
 
-**Plans**: 10/10 plans executed (7/7 executed in 5 waves + 3 UAT gap-closure plans)
+**Plans**: 10/10 plans complete (7/7 executed in 5 waves + 3 UAT gap-closure plans)
 
 Plans:
 **Wave 1**
@@ -161,7 +161,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Odtwarzanie z timerem | 10/10 | In Progress|  |
+| 1. Odtwarzanie z timerem | 10/10 | Complete    | 2026-10-04 |
 | 2. Poziom dB i tryby wyciszania | 0/TBD | Not started | - |
 | 3. Noc bez przerw i test w Google Play | 0/TBD | Not started | - |
 | 4. Miernik dB i kalibracja mikrofonem | 0/TBD | Not started | - |

@@ -7,19 +7,19 @@
 
 ### Odtwarzanie (PLAY)
 
-- [ ] **PLAY-01**: Użytkownik może wybrać dźwięk z biblioteki i uruchomić odtwarzanie
-- [ ] **PLAY-02**: Dźwięk jest odtwarzany w pętli bez słyszalnych przerw/kliknięć aż do końca ustawionego czasu
+- [x] **PLAY-01**: Użytkownik może wybrać dźwięk z biblioteki i uruchomić odtwarzanie
+- [x] **PLAY-02**: Dźwięk jest odtwarzany w pętli bez słyszalnych przerw/kliknięć aż do końca ustawionego czasu
 - [ ] **PLAY-03**: Odtwarzanie, timer i wyciszanie działają dalej po zablokowaniu ekranu, w trybie Doze i przy optymalizacji baterii (test: 8 h bez ładowarki na Xiaomi i Samsungu)
 - [ ] **PLAY-04**: Powiadomienie pokazuje pozostały czas i aktualny poziom dB oraz pozwala zatrzymać/wstrzymać odtwarzanie z ekranu blokady
-- [ ] **PLAY-05**: Odtwarzanie zaczyna się kilkusekundowym płynnym pogłośnieniem (fade-in), a nie od razu pełną głośnością
-- [ ] **PLAY-06**: Po upływie czasu dźwięk jest wygaszany przez kilka sekund do ciszy, a następnie odtwarzanie się kończy (bez nagłego urwania)
+- [x] **PLAY-05**: Odtwarzanie zaczyna się kilkusekundowym płynnym pogłośnieniem (fade-in), a nie od razu pełną głośnością
+- [x] **PLAY-06**: Po upływie czasu dźwięk jest wygaszany przez kilka sekund do ciszy, a następnie odtwarzanie się kończy (bez nagłego urwania)
 - [ ] **PLAY-07**: Odtwarzanie poprawnie reaguje na przerwania (połączenie, inna aplikacja audio) i wstrzymuje się po odłączeniu słuchawek/głośnika BT, zamiast nagle grać z głośnika telefonu
 
 ### Czas (TIME)
 
-- [ ] **TIME-01**: Użytkownik może wybrać czas przyciskiem szybkiego wyboru (15 / 30 / 45 / 60 min)
-- [ ] **TIME-02**: Użytkownik może ręcznie wpisać dowolny czas odtwarzania
-- [ ] **TIME-03**: Pozostały czas jest widoczny w aplikacji podczas odtwarzania
+- [x] **TIME-01**: Użytkownik może wybrać czas przyciskiem szybkiego wyboru (15 / 30 / 45 / 60 min)
+- [x] **TIME-02**: Użytkownik może ręcznie wpisać dowolny czas odtwarzania
+- [x] **TIME-03**: Pozostały czas jest widoczny w aplikacji podczas odtwarzania
 
 ### Głośność w dB (VOL)
 
@@ -49,7 +49,7 @@
 
 ### Biblioteka dźwięków (LIB)
 
-- [ ] **LIB-01**: Aplikacja zawiera wbudowane szumy: biały, różowy, brązowy
+- [x] **LIB-01**: Aplikacja zawiera wbudowane szumy: biały, różowy, brązowy
 - [ ] **LIB-02**: Aplikacja zawiera wbudowane dźwięki natury: deszcz, fale, wiatr
 - [ ] **LIB-03**: Aplikacja zawiera wbudowane kołysanki instrumentalne (melodie z domeny publicznej, nagrania na wolnej licencji)
 - [ ] **LIB-04**: Użytkownik może wgrać własny plik dźwiękowy z telefonu; plik jest kopiowany do aplikacji i działa nawet po usunięciu oryginału
@@ -66,8 +66,8 @@
 
 ### Interfejs (UI)
 
-- [ ] **UI-01**: Ciemny interfejs (tryb nocny), który nie razi światłem w zaciemnionym pokoju
-- [ ] **UI-02**: Aplikacja dostępna po polsku i angielsku (z poprawną odmianą liczebników w PL)
+- [x] **UI-01**: Ciemny interfejs (tryb nocny), który nie razi światłem w zaciemnionym pokoju
+- [x] **UI-02**: Aplikacja dostępna po polsku i angielsku (z poprawną odmianą liczebników w PL)
 - [ ] **UI-03**: Dolna nawigacja z zakładką „Bezpieczne odtwarzanie”
 - [ ] **UI-04**: Ekran „Niezawodność” z instrukcją i skrótami do ustawień baterii (Xiaomi, Samsung itp.), żeby system nie przerywał odtwarzania
 
@@ -116,16 +116,16 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLAY-01 | Phase 1 | Pending |
-| PLAY-02 | Phase 1 | Pending |
+| PLAY-01 | Phase 1 | Complete |
+| PLAY-02 | Phase 1 | Complete |
 | PLAY-03 | Phase 3 | Pending |
 | PLAY-04 | Phase 2 | Pending |
-| PLAY-05 | Phase 1 | Pending |
-| PLAY-06 | Phase 1 | Pending |
+| PLAY-05 | Phase 1 | Complete |
+| PLAY-06 | Phase 1 | Complete |
 | PLAY-07 | Phase 3 | Pending |
-| TIME-01 | Phase 1 | Pending |
-| TIME-02 | Phase 1 | Pending |
-| TIME-03 | Phase 1 | Pending |
+| TIME-01 | Phase 1 | Complete |
+| TIME-02 | Phase 1 | Complete |
+| TIME-03 | Phase 1 | Complete |
 | VOL-01 | Phase 2 | Pending |
 | VOL-02 | Phase 2 | Pending |
 | VOL-03 | Phase 2 | Pending |
@@ -143,7 +143,7 @@
 | MIC-05 | Phase 4 | Pending |
 | MIC-06 | Phase 4 | Pending |
 | MIC-07 | Phase 4 | Pending |
-| LIB-01 | Phase 1 | Pending |
+| LIB-01 | Phase 1 | Complete |
 | LIB-02 | Phase 5 | Pending |
 | LIB-03 | Phase 5 | Pending |
 | LIB-04 | Phase 5 | Pending |
@@ -154,8 +154,8 @@
 | PRES-02 | Phase 5 | Pending |
 | PRES-03 | Phase 5 | Pending |
 | PRES-04 | Phase 5 | Pending |
-| UI-01 | Phase 1 | Pending |
-| UI-02 | Phase 1 | Pending |
+| UI-01 | Phase 1 | Complete |
+| UI-02 | Phase 1 | Complete |
 | UI-03 | Phase 6 | Pending |
 | UI-04 | Phase 3 | Pending |
 | SAFE-01 | Phase 6 | Pending |
