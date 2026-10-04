@@ -140,7 +140,7 @@ class SessionEngineTest {
         assertEquals(SessionState.Idle, r.state.value)
 
         advanceTo(61_250)
-        assertEquals(body - 30.0, db(r.out.lastVolume()), tolDb)   // halfway through the 2.5 s ramp
+        assertEquals(body - 12.5, db(r.out.lastVolume()), tolDb)   // halfway through the 2.5 s ramp down to the floor
 
         advanceTo(62_520)
         val stopped = r.out.stoppedAt
@@ -148,9 +148,70 @@ class SessionEngineTest {
         assertTrue("stopped at $stopped", abs(stopped!! - 62_500L) <= 20L)
 
         val ramp = r.out.volumes.filter { it.first in 60_000..62_500 && it.second > 0f }.map { db(it.second) }
+        assertEquals(FADE_FLOOR_DB, ramp.last(), tolDb)           // audible to the end, then the mute
         ramp.zipWithNext().forEach { (a, b) ->
             assertTrue("step ${abs(b - a)} dB inside the stop ramp", abs(b - a) <= 0.6)
         }
+    }
+
+    @Test
+    fun sliderMoveDuringTheFinalFadeAppliesAtOnceAndStillEndsOnTime() = runTest {
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, slider)
+        advanceTo(895_000)
+
+        r.engine.setVolume(1f)
+        assertEquals(895_000L, r.out.volumes.last().first)
+        assertEquals(-22.5, db(r.out.lastVolume()), tolDb)        // slider 100 %: base 0, span 45, halfway
+
+        advanceTo(900_000)
+        assertEquals(900_000L, r.out.stoppedAt)
+        assertEquals(0f, r.out.lastVolume(), 0f)
+    }
+
+    @Test
+    fun quietSliderFinalFadeIsMonotonicAndEndsBelowTheSlider() = runTest {
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, 0.05f)
+        advanceTo(899_000)
+        assertEquals(-47.0, db(r.out.lastVolume()), tolDb)        // end level is slider - 10 dB = -48
+
+        val window = r.out.volumes.filter { it.first in 889_000..899_000 }.map { db(it.second) }
+        assertTrue(window.size > 100)
+        window.zipWithNext().forEach { (a, b) -> assertTrue("level rose from $a to $b", b <= a + 1e-3) }
+
+        advanceTo(900_000)
+        assertEquals(900_000L, r.out.stoppedAt)
+        assertEquals(0f, r.out.lastVolume(), 0f)
+    }
+
+    @Test
+    fun silentSliderSessionStaysSilentAndEndsOnTime() = runTest {
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, 0f)
+        advanceTo(900_000)
+        assertTrue(r.out.volumes.all { it.second == 0f })
+        assertEquals(900_000L, r.out.stoppedAt)
+        assertEquals(SessionState.Idle, r.state.value)
+    }
+
+    @Test
+    fun oneMinuteExtensionInsideTheFinalFadeRecoversSmoothly() = runTest {
+        val r = Rig(this)
+        r.engine.start(Noise.PINK, 900_000, slider)
+        advanceTo(896_000)
+        r.engine.extend(60_000)
+        assertEquals(SessionState.Running(Noise.PINK, 960_000), r.state.value)
+
+        advanceTo(899_100)
+        val window = r.out.volumes.filter { it.first in 889_000..899_100 }.map { db(it.second) }
+        assertTrue(window.size > 100)
+        window.zipWithNext().forEach { (a, b) -> assertTrue("step ${abs(b - a)} dB", abs(b - a) <= tolDb) }
+        assertEquals(Gain.amplitude(sliderDb), r.out.lastVolume(), 1e-4f)
+
+        advanceTo(900_100)
+        assertNull(r.out.stoppedAt)
+        assertTrue(r.state.value is SessionState.Running)
     }
 
     @Test

@@ -63,9 +63,49 @@ class SessionTimelineTest {
     fun beginStopRampsFromTheCurrentOffsetOverTheRampTime() {
         val t = timeline()
         t.beginStop(100_000, base, 1_500)
-        assertEquals(-30.0, t.offsetDb(100_750, base), tol)
+        assertEquals(-9.5, t.offsetDb(100_750, base), tol)
+        assertEquals(-19.0, t.offsetDb(101_499, base), 0.1)
         assertFalse(t.isFinished(101_499))
         assertTrue(t.isFinished(101_500))
+    }
+
+    @Test
+    fun stopDuringTheFadeInNeverRises() {
+        val t = SessionTimeline(startMs = 0, endMs = 900_000)
+        val b = -20.0
+        t.beginStop(1_000, b)
+        assertEquals(-48.0, t.offsetDb(1_000, b), tol)
+        for (now in 1_000L..3_500L step 100L) {
+            assertTrue("offset ${t.offsetDb(now, b)} at $now", t.offsetDb(now, b) <= -48.0 + 1e-9)
+        }
+    }
+
+    @Test
+    fun fullScaleSliderFadesDownToTheFloor() {
+        val t = timeline()
+        assertEquals(45.0, t.endSpanDb(0.0), tol)
+        assertEquals(-45.0, t.offsetDb(900_000, 0.0), tol)
+    }
+
+    @Test
+    fun quietSliderStillFadesByTheMinimumSpan() {
+        val t = timeline()
+        assertEquals(10.0, t.endSpanDb(-38.0), tol)
+        assertEquals(-10.0, t.offsetDb(900_000, -38.0), tol)
+    }
+
+    @Test
+    fun silentSliderNeverProducesNaN() {
+        val silent = Double.NEGATIVE_INFINITY
+        val t = timeline()
+        assertEquals(MIN_FADE_SPAN_DB, t.endSpanDb(silent), tol)
+        for (now in longArrayOf(0, 450_000, 895_000, 900_000)) {
+            val v = t.offsetDb(now, silent)
+            assertFalse("offset $v at $now", v.isNaN() || v.isInfinite())
+        }
+        t.extend(895_000, 60_000, silent)
+        t.beginStop(895_500, silent)
+        assertFalse(t.offsetDb(896_000, silent).isNaN())
     }
 
     @Test
