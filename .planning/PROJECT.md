@@ -19,19 +19,22 @@ Rodzic ustawia dźwięk, czas i przebieg wyciszania w dB, blokuje telefon — a 
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Wbudowane szumy (biały, różowy, brązowy) odtwarzane w pętli bez słyszalnych przerw — Phase 1 (sprawdzone na 1 telefonie: Xiaomi, Android 11; test na kolejnych telefonach odłożony przed publikację w Play)
+- ✓ Użytkownik ustawia długość odtwarzania (gotowe czasy + własny 1 min – 8 h, +1 / +5 min w trakcie) — Phase 1
+- ✓ Po upływie czasu płynne wygaszenie (liniowo w dB do -45 dBFS) i stop, bez nagłego urwania — Phase 1
+- ✓ Odtwarzanie i timer działają przy zablokowanym ekranie (usługa mediaPlayback + powiadomienie) — Phase 1
+- ✓ Tryb nocny — ciemny interfejs bez białego błysku przy starcie — Phase 1 (splash Androida 12+ niesprawdzony na urządzeniu)
+- ✓ Wersja polska i angielska (z odmianą liczebników) — Phase 1, obowiązuje w każdej kolejnej fazie
 
 ### Active
 
 **Biblioteka dźwięków**
-- [ ] Wbudowane dźwięki: szumy (biały, różowy, brązowy), natura (deszcz, fale, wiatr), kołysanki instrumentalne
+- [ ] Wbudowane dźwięki: natura (deszcz, fale, wiatr), kołysanki instrumentalne (szumy gotowe w Phase 1)
 - [ ] Użytkownik może ręcznie wgrać własny plik dźwiękowy z telefonu
-- [ ] Plik odtwarzany w pętli bez słyszalnych przerw aż do końca ustawionego czasu
+- [ ] Własne pliki i dźwięki natury odtwarzane w pętli bez słyszalnych przerw aż do końca ustawionego czasu (szumy gotowe w Phase 1)
 
 **Odtwarzanie i czas**
-- [ ] Użytkownik ustawia długość odtwarzania (np. 15 min)
-- [ ] Po upływie czasu: krótkie (kilkusekundowe) wygaszenie do zera, potem stop — bez nagłego urwania
-- [ ] Odtwarzanie, timer i wyciszanie działają przy wygaszonym ekranie / zablokowanym telefonie (sterowanie z powiadomienia)
+- [ ] Sterowanie z powiadomienia (anuluj timer, +5 min) oraz wyciszanie w dB przy zablokowanym ekranie
 
 **Głośność w dB**
 - [ ] Głośność ustawiana suwakiem wyrażonym w dB SPL (te same jednostki co pomiar mikrofonem)
@@ -46,8 +49,6 @@ Rodzic ustawia dźwięk, czas i przebieg wyciszania w dB, blokuje telefon — a 
 
 **Wygoda**
 - [ ] Zapisywanie zestawów ustawień (dźwięk + czas + wyciszanie) jako ulubione, np. „Drzemka”, „Noc”
-- [ ] Tryb nocny — ciemny interfejs, żeby nie budzić dziecka światłem ekranu
-- [ ] Wersja polska i angielska
 
 **Zakładka „Bezpieczne odtwarzanie” (na dole aplikacji)**
 - [ ] Zalecane poziomy dB dla niemowląt i dzieci (np. AAP / WHO) ze źródłami
@@ -89,7 +90,11 @@ Rodzic ustawia dźwięk, czas i przebieg wyciszania w dB, blokuje telefon — a 
 | Suwak i wyciszanie w dB SPL (z kalibracją) | Spójność z pomiarem i normami bezpieczeństwa | — Pending |
 | Dwa tryby wyciszania: tempo (X dB / Y min + pułap) oraz start→koniec | Użytkownik chce obu | — Pending |
 | Płynne wyciszanie (nie schodkowe) | Wybór użytkownika | — Pending |
-| Kilkusekundowe wygaszenie na końcu | Brak nagłego urwania dźwięku, nie budzi dziecka | — Pending |
+| Kilkusekundowe wygaszenie na końcu | Brak nagłego urwania dźwięku, nie budzi dziecka | ✓ Good — Phase 1 (fade liniowy w dB do progu -45 dBFS, słyszalny do ostatniej sekundy) |
+| Szumy generowane offline jako okresowe FLAC + jeden MediaItem z REPEAT_MODE_ONE | Pętla matematycznie bez szwu, bez crossfade | ✓ Good — Phase 1 (0 discontinuities na Xiaomi) |
+| Podgląd kafelka 3 s na poziomie suwaka, blokowany w trakcie startu i 2,5 s po Stop | Rodzic słyszy realną głośność, podgląd nie nakłada się na sesję | ✓ Good — Phase 1 |
+| Usunięcie z ostatnich kończy sesję (rampa jak Stop) | Brak „martwego” odliczania bez dźwięku (D-19) | ✓ Good — Phase 1 |
+| Test pętli na wielu telefonach i splash Androida 12+ odłożone przed publikację | Deweloper ma tylko 1 telefon | ⚠ Revisit — przed publikacją w Play |
 | Publikacja bezpłatna w Google Play | Dla innych rodziców | — Pending |
 
 ## Evolution
@@ -110,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-03 after initialization*
+*Last updated: 2026-10-04 after Phase 1*
