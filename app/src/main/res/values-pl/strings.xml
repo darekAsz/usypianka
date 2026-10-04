@@ -2,8 +2,18 @@
 <resources>
     <string name="action_start">Start</string>
     <string name="action_stop">Stop</string>
+    <string name="action_extend">+5 min</string>
     <string name="notification_channel_name">Odtwarzanie</string>
     <string name="noise_white_name">Szum biały</string>
     <string name="noise_pink_name">Szum różowy</string>
     <string name="noise_brown_name">Szum brązowy</string>
+    <string name="noise_white_desc">Jasny i równy, jak wentylator</string>
+    <string name="noise_pink_desc">Łagodniejszy, jak deszcz</string>
+    <string name="noise_brown_desc">Głęboki, jak wodospad</string>
+    <string name="section_sound">Dźwięk</string>
+    <string name="section_time">Czas</string>
+    <string name="section_volume">Głośność</string>
+    <string name="chip_minutes">%d min</string>
+    <string name="chip_custom">Inny</string>
+    <string name="countdown_label">Pozostały czas</string>
 </resources>

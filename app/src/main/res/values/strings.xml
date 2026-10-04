@@ -3,8 +3,18 @@
     <string name="app_name" translatable="false">Usypianka</string>
     <string name="action_start">Start</string>
     <string name="action_stop">Stop</string>
+    <string name="action_extend">+5 min</string>
     <string name="notification_channel_name">Playback</string>
     <string name="noise_white_name">White noise</string>
     <string name="noise_pink_name">Pink noise</string>
     <string name="noise_brown_name">Brown noise</string>
+    <string name="noise_white_desc">Bright and even, like a fan</string>
+    <string name="noise_pink_desc">Softer, like rain</string>
+    <string name="noise_brown_desc">Deep, like a waterfall</string>
+    <string name="section_sound">Sound</string>
+    <string name="section_time">Time</string>
+    <string name="section_volume">Volume</string>
+    <string name="chip_minutes">%d min</string>
+    <string name="chip_custom">Other</string>
+    <string name="countdown_label">Time remaining</string>
 </resources>
